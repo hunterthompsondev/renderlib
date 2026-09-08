@@ -28,14 +28,16 @@ Renders a colorful triangle.
 Covers: window creation, geometry configuration, pipeline creation.
 
 ### Hello Sphere
-<video src="./docs/assets/hello-sphere-video.mp4"></video>
+https://github.com/user-attachments/assets/0d8a8ce6-6a85-4a85-8a16-13f94a3861b3
 
 Renders a moving, textured sphere.
 
 Covers: depth buffers, uniform buffers, textures, descriptor layouts/sets, push constants.
 
 ### Suzanne Scatter
-<video src="./docs/assets/suzanne-scatter-video.mp4"></video>
+https://github.com/user-attachments/assets/97241b28-d381-4601-b9f3-ac006be82960
+
+**Note**: The video has been intentionally compressed to meet GitHub's file size limits
 
 Renders 25,000 instances of Suzanne with randomized positions and rotations via GPU instancing.
 
