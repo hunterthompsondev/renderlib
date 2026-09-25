@@ -1,18 +1,18 @@
 #include "VulkanDevice.hpp"
 
-#include <backends/vulkan/utils/VulkanConversions.hpp>
+#include <backends/vulkan/utils/ToVkEnums.hpp>
 
 SamplerHandle VulkanDevice::CreateSampler(const SamplerCreateInfo &desc)
 {
     VulkanSampler sampler{};
 
     vk::SamplerCreateInfo samplerCI{};
-    samplerCI.setMagFilter(ToVulkanFilter(desc.magFilter))
-        .setMinFilter(ToVulkanFilter(desc.minFilter))
-        .setMipmapMode(ToVulkanMipmapMode(desc.minFilter))
-        .setAddressModeU(ToVulkanAddressMode(desc.addressModeU))
-        .setAddressModeV(ToVulkanAddressMode(desc.addressModeV))
-        .setAddressModeW(ToVulkanAddressMode(desc.addressModeW))
+    samplerCI.setMagFilter(ToVk(desc.magFilter))
+        .setMinFilter(ToVk(desc.minFilter))
+        .setMipmapMode(ToVk(desc.mipMapMode))
+        .setAddressModeU(ToVk(desc.addressModeU))
+        .setAddressModeV(ToVk(desc.addressModeV))
+        .setAddressModeW(ToVk(desc.addressModeW))
         .setAnisotropyEnable(desc.maxAnisotropy > 1.0f)
         .setMaxAnisotropy(desc.maxAnisotropy)
         .setMinLod(0.0f)

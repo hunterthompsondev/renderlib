@@ -3,14 +3,16 @@
 #include <iostream>
 
 #include <backends/vulkan/utils/MemoryUtils.hpp>
-#include <backends/vulkan/utils/VulkanConversions.hpp>
+#include <backends/vulkan/utils/ToVkEnums.hpp>
+#include <backends/vulkan/utils/ToVkFlags.hpp>
 
 TextureHandle VulkanDevice::CreateTexture(const TextureCreateInfo &desc)
 {
     VulkanTexture texture{
         .managesOwnMemory = true,
-        .type = desc.type,
-        .format = desc.format,
+        .type = ToVk(desc.type),
+        .format = ToVk(desc.format),
+        .imageAspectFlags = ToVk(desc.imageAspectFlags),
         .width = desc.width,
         .height = desc.height,
         .depth = desc.depth,
@@ -19,21 +21,21 @@ TextureHandle VulkanDevice::CreateTexture(const TextureCreateInfo &desc)
     };
 
     vk::ImageCreateFlags flags{};
-    if (desc.type == TextureType::TextureCube)
+    if (desc.type == ImageType::TextureCube)
     {
         flags |= vk::ImageCreateFlagBits::eCubeCompatible;
     }
 
     vk::ImageCreateInfo imageCI{};
     imageCI.setFlags(flags)
-        .setImageType(ToVulkanImageType(desc.type))
-        .setFormat(ToVulkanFormat(desc.format))
+        .setImageType(ToVk(desc.type))
+        .setFormat(ToVk(desc.format))
         .setExtent(vk::Extent3D{desc.width, desc.height, desc.depth})
         .setMipLevels(desc.mipLevels)
         .setArrayLayers(desc.arrayLayers)
         .setSamples(vk::SampleCountFlagBits::e1)
         .setTiling(vk::ImageTiling::eOptimal)
-        .setUsage(ToVulkanImageUsageFlags(desc.usage))
+        .setUsage(ToVk(desc.usage))
         .setSharingMode(vk::SharingMode::eExclusive)
         .setInitialLayout(vk::ImageLayout::eUndefined);
 
@@ -81,10 +83,8 @@ TextureViewHandle VulkanDevice::CreateTextureView(const TextureViewCreateInfo &d
         .sourceTexture = desc.sourceTexture,
     };
 
-    Format viewFormat = desc.format == Format::Undefined ? texture->format : desc.format;
-
     vk::ImageSubresourceRange subresourceRange{};
-    subresourceRange.setAspectMask(ToVulkanImageAspectFlags(viewFormat))
+    subresourceRange.setAspectMask(ToVk(desc.imageAspectFlags))
         .setBaseMipLevel(0)
         .setLevelCount(texture->mipLevels)
         .setBaseArrayLayer(0)
@@ -92,8 +92,8 @@ TextureViewHandle VulkanDevice::CreateTextureView(const TextureViewCreateInfo &d
 
     vk::ImageViewCreateInfo viewCI{};
     viewCI.setImage(texture->imageHandle)
-        .setViewType(ToVulkanImageViewType(desc.viewType))
-        .setFormat(ToVulkanFormat(viewFormat))
+        .setViewType(ToVk(desc.viewType))
+        .setFormat(ToVk(desc.format))
         .setSubresourceRange(subresourceRange);
 
     // Create image view
@@ -158,11 +158,8 @@ void VulkanDevice::UpdateTexture(TextureHandle handle, uint32_t mipLevel, uint32
 
     cmd.begin(vk::CommandBufferBeginInfo{}.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
-    vk::ImageAspectFlags aspectMask =
-        IsDepthFormat(textureImpl->format) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
-
     vk::ImageSubresourceRange range{};
-    range.setAspectMask(aspectMask)
+    range.setAspectMask(textureImpl->imageAspectFlags)
         .setBaseMipLevel(mipLevel)
         .setLevelCount(1)
         .setBaseArrayLayer(arrayLayer)
@@ -184,7 +181,7 @@ void VulkanDevice::UpdateTexture(TextureHandle handle, uint32_t mipLevel, uint32
     copyRegion.setBufferOffset(0)
         .setBufferRowLength(0)   // 0 = tightly packed
         .setBufferImageHeight(0) // 0 = tightly packed
-        .setImageSubresource(vk::ImageSubresourceLayers{aspectMask, mipLevel, arrayLayer, 1})
+        .setImageSubresource(vk::ImageSubresourceLayers{textureImpl->imageAspectFlags, mipLevel, arrayLayer, 1})
         .setImageOffset({0, 0, 0})
         .setImageExtent({
             std::max(textureImpl->width >> mipLevel, 1u),
@@ -213,13 +210,15 @@ void VulkanDevice::UpdateTexture(TextureHandle handle, uint32_t mipLevel, uint32
     m_context.graphicsQueue.waitIdle();
 }
 
-TextureHandle VulkanDevice::RegisterExternalTexture(VkImage image, Format format, uint32_t width, uint32_t height)
+TextureHandle VulkanDevice::RegisterExternalTexture(VkImage image, ImageAspectFlags imageAspectFlags, Format format,
+                                                    uint32_t width, uint32_t height)
 {
     VulkanTexture texture{
         .imageHandle = image,
         .managesOwnMemory = false,
-        .type = TextureType::Texture2D,
-        .format = format,
+        .type = ToVk(ImageType::Texture2D),
+        .format = ToVk(format),
+        .imageAspectFlags = ToVk(imageAspectFlags),
         .width = width,
         .height = height,
         .depth = 1,

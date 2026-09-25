@@ -9,6 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "Utils.hpp"
+#include "renderlib/Flags.hpp"
 #include <renderlib/RenderLib.hpp>
 
 struct Camera
@@ -82,9 +83,10 @@ void RecreateDepthBuffer(AppContext *context)
     }
 
     context->depthTexture = context->device->CreateTexture({
-        .type = TextureType::Texture2D,
-        .usage = TextureUsage::DepthStencil,
+        .type = ImageType::Texture2D,
+        .usage = ImageUsageFlagBits::DepthStencil,
         .format = context->depthFormat,
+        .imageAspectFlags = ImageAspectFlagBits::Depth,
         .width = context->windowWidth,
         .height = context->windowHeight,
         .depth = 1,
@@ -94,8 +96,9 @@ void RecreateDepthBuffer(AppContext *context)
 
     context->depthTextureView = context->device->CreateTextureView({
         .sourceTexture = context->depthTexture,
-        .viewType = TextureType::Texture2D,
-        .format = Format::Undefined,
+        .viewType = ImageViewType::Texture2D,
+        .imageAspectFlags = ImageAspectFlagBits::Depth,
+        .format = context->depthFormat,
     });
 }
 
@@ -200,8 +203,7 @@ bool InitializeGeometry(AppContext *context)
 
     // Create vertex buffer
     context->vertexBuffer = context->device->CreateBuffer({
-        .bufferType = BufferType::Vertex,
-        .bufferUsage = BufferUsage::Dynamic,
+        .bufferUsage = BufferUsageFlagBits::Vertex,
         .data = vertices.data(),
         .sizeInBytes = vertices.size() * sizeof(float),
     });
@@ -213,8 +215,7 @@ bool InitializeGeometry(AppContext *context)
 
     // Create index buffer
     context->indexBuffer = context->device->CreateBuffer({
-        .bufferType = BufferType::Index,
-        .bufferUsage = BufferUsage::Dynamic,
+        .bufferUsage = BufferUsageFlagBits::Index,
         .data = indices.data(),
         .sizeInBytes = indices.size() * sizeof(uint16_t),
     });
@@ -231,8 +232,7 @@ bool InitializeMiscBuffers(AppContext *context)
 {
     // Create uniform buffer
     context->uniformBuffer = context->device->CreateBuffer({
-        .bufferType = BufferType::Uniform,
-        .bufferUsage = BufferUsage::Dynamic,
+        .bufferUsage = BufferUsageFlagBits::Uniform,
         .data = &context->camera,
         .sizeInBytes = sizeof(Camera),
     });
@@ -246,8 +246,7 @@ bool InitializeMiscBuffers(AppContext *context)
     std::vector<InstanceData> instances = GenerateRandomInstances(context->instanceCount, glm::vec3(-100.0f),
                                                                   glm::vec3(100.0f), glm::vec3(5.0f), glm::vec3(5.0f));
     context->storageBuffer = context->device->CreateBuffer({
-        .bufferType = BufferType::Storage,
-        .bufferUsage = BufferUsage::Static,
+        .bufferUsage = BufferUsageFlagBits::Storage,
         .data = instances.data(),
         .sizeInBytes = instances.size() * sizeof(InstanceData),
     });
@@ -267,9 +266,10 @@ bool InitializeTextures(AppContext *context)
 
     // Create texture
     context->albedoTexture = context->device->CreateTexture({
-        .type = TextureType::Texture2D,
-        .usage = TextureUsage::Sampled | TextureUsage::TransferDst,
+        .type = ImageType::Texture2D,
+        .usage = ImageUsageFlagBits::Sampled | ImageUsageFlagBits::TransferDst,
         .format = Format::RGBA8Srgb,
+        .imageAspectFlags = ImageAspectFlagBits::Color,
         .width = static_cast<uint32_t>(colorGridImage.width),
         .height = static_cast<uint32_t>(colorGridImage.height),
         .depth = 1,
@@ -287,8 +287,9 @@ bool InitializeTextures(AppContext *context)
     // Create texture view
     context->albedoTextureView = context->device->CreateTextureView({
         .sourceTexture = context->albedoTexture,
-        .viewType = TextureType::Texture2D,
-        .format = Format::Undefined,
+        .viewType = ImageViewType::Texture2D,
+        .imageAspectFlags = ImageAspectFlagBits::Color,
+        .format = Format::RGBA8Srgb,
     });
     if (!context->albedoTextureView.isValid())
     {
@@ -298,11 +299,12 @@ bool InitializeTextures(AppContext *context)
 
     // Create texture sampler
     context->albedoSampler = context->device->CreateSampler({
-        .magFilter = FilterMode::Linear,
-        .minFilter = FilterMode::Linear,
-        .addressModeU = AddressMode::Repeat,
-        .addressModeV = AddressMode::Repeat,
-        .addressModeW = AddressMode::Repeat,
+        .magFilter = Filter::Linear,
+        .minFilter = Filter::Linear,
+        .mipMapMode = SamplerMipmapMode::Linear,
+        .addressModeU = SamplerAddressMode::Repeat,
+        .addressModeV = SamplerAddressMode::Repeat,
+        .addressModeW = SamplerAddressMode::Repeat,
         .maxAnisotropy = 1.0f,
     });
     if (!context->albedoSampler.isValid())
@@ -324,19 +326,19 @@ bool InitializeDescriptors(AppContext *context)
                     .binding = 0,
                     .type = DescriptorType::UniformBuffer,
                     .count = 1,
-                    .stageFlags = ShaderStageFlags::Vertex,
+                    .stageFlags = ShaderStageFlagBits::Vertex,
                 },
                 {
                     .binding = 1,
                     .type = DescriptorType::StorageBuffer,
                     .count = 1,
-                    .stageFlags = ShaderStageFlags::Vertex,
+                    .stageFlags = ShaderStageFlagBits::Vertex,
                 },
                 {
                     .binding = 2,
                     .type = DescriptorType::SampledTexture,
                     .count = 1,
-                    .stageFlags = ShaderStageFlags::Fragment,
+                    .stageFlags = ShaderStageFlagBits::Fragment,
                 },
             },
     });
@@ -389,7 +391,7 @@ bool InitializePipeline(AppContext *context)
     std::vector<uint8_t> fragBytes = ReadFileToBytes("shaders/suzanne-scatter.frag.spv");
 
     ShaderModuleHandle vertexShader = context->device->CreateShaderModule({
-        .stage = ShaderStage::Vertex,
+        .stage = ShaderStageFlagBits::Vertex,
         .entryPoint = "main",
         .bytecode = vertBytes,
     });
@@ -400,7 +402,7 @@ bool InitializePipeline(AppContext *context)
     }
 
     ShaderModuleHandle fragmentShader = context->device->CreateShaderModule({
-        .stage = ShaderStage::Fragment,
+        .stage = ShaderStageFlagBits::Fragment,
         .entryPoint = "main",
         .bytecode = fragBytes,
     });
@@ -417,16 +419,16 @@ bool InitializePipeline(AppContext *context)
         .descriptorLayouts = {context->layout},
         .pushConstants =
             {
-                {.offset = 0, .size = sizeof(ObjectPushConstants), .stageFlags = ShaderStageFlags::Vertex},
+                {.offset = 0, .size = sizeof(ObjectPushConstants), .stageFlags = ShaderStageFlagBits::Vertex},
             },
         .vertexLayout =
             {
                 .stride = sizeof(float) * 8,
                 .attributes =
                     {
-                        {.location = 0, .offset = 0, .format = VertexFormat::Float32x3},
-                        {.location = 1, .offset = sizeof(float) * 3, .format = VertexFormat::Float32x2},
-                        {.location = 2, .offset = sizeof(float) * 5, .format = VertexFormat::Float32x3},
+                        {.location = 0, .offset = 0, .format = Format::Float32x3},
+                        {.location = 1, .offset = sizeof(float) * 3, .format = Format::Float32x2},
+                        {.location = 2, .offset = sizeof(float) * 5, .format = Format::Float32x3},
                     },
             },
         .colorFormats = {context->colorFormat},
@@ -505,15 +507,15 @@ int main()
             .height = context.windowHeight,
             .colorAttachments = {{
                 .view = renderDevice->GetCurrentSwapchainImageView(context.swapchain),
-                .loadOp = LoadOp::Clear,
-                .storeOp = StoreOp::Store,
+                .loadOp = AttachmentLoadOp::Clear,
+                .storeOp = AttachmentStoreOp::Store,
                 .clearColor = {0.01f, 0.01f, 0.02f, 1.0f},
             }},
             .depthAttachment =
                 DepthAttachmentInfo{
                     .view = context.depthTextureView,
-                    .loadOp = LoadOp::Clear,
-                    .storeOp = StoreOp::DontCare,
+                    .loadOp = AttachmentLoadOp::Clear,
+                    .storeOp = AttachmentStoreOp::DontCare,
                     .clearDepth = 1.0f,
                 },
         };
@@ -525,7 +527,7 @@ int main()
 
         renderDevice->BindPipeline(cmd, context.pipeline);
         renderDevice->BindDescriptorSet(cmd, context.pipeline, context.set);
-        renderDevice->PushConstants(cmd, context.pipeline, ShaderStageFlags::Vertex, 0, sizeof(ObjectPushConstants),
+        renderDevice->PushConstants(cmd, context.pipeline, ShaderStageFlagBits::Vertex, 0, sizeof(ObjectPushConstants),
                                     &objectData);
         renderDevice->BindVertexBuffer(cmd, context.vertexBuffer);
         renderDevice->BindIndexBuffer(cmd, context.indexBuffer, IndexType::UInt16);

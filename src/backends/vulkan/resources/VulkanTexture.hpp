@@ -13,8 +13,10 @@ struct VulkanTexture
     vk::DeviceSize size = 0;
     bool managesOwnMemory = false;
 
-    TextureType type;
-    Format format;
+    vk::ImageType type;
+    vk::ImageUsageFlags usage;
+    vk::Format format;
+    vk::ImageAspectFlags imageAspectFlags;
 
     uint32_t width;
     uint32_t height;

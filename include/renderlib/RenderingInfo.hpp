@@ -11,16 +11,16 @@
 struct ColorAttachmentInfo
 {
     TextureViewHandle view;
-    LoadOp loadOp = LoadOp::Clear;
-    StoreOp storeOp = StoreOp::Store;
+    AttachmentLoadOp loadOp = AttachmentLoadOp::Clear;
+    AttachmentStoreOp storeOp = AttachmentStoreOp::Store;
     float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 };
 
 struct DepthAttachmentInfo
 {
     TextureViewHandle view;
-    LoadOp loadOp = LoadOp::Clear;
-    StoreOp storeOp = StoreOp::DontCare;
+    AttachmentLoadOp loadOp = AttachmentLoadOp::Clear;
+    AttachmentStoreOp storeOp = AttachmentStoreOp::DontCare;
     float clearDepth = 1.0f;
 };
 

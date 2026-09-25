@@ -3,21 +3,18 @@
 #include <iostream>
 
 #include <backends/vulkan/utils/MemoryUtils.hpp>
-#include <backends/vulkan/utils/VulkanConversions.hpp>
+#include <backends/vulkan/utils/ToVkFlags.hpp>
 
 // Todo: Implement "Static" buffers
 BufferHandle VulkanDevice::CreateBuffer(const BufferCreateInfo &desc)
 {
     VulkanBuffer buffer{
         .size = static_cast<vk::DeviceSize>(desc.sizeInBytes),
-        .type = desc.bufferType,
-        .usage = desc.bufferUsage,
+        .usage = ToVk(desc.bufferUsage),
     };
 
     vk::BufferCreateInfo bufferCI{};
-    bufferCI.setSize(desc.sizeInBytes)
-        .setUsage(ToVulkanBufferUsageType(desc.bufferType))
-        .setSharingMode(vk::SharingMode::eExclusive);
+    bufferCI.setSize(desc.sizeInBytes).setUsage(ToVk(desc.bufferUsage)).setSharingMode(vk::SharingMode::eExclusive);
 
     // Create buffer
     buffer.buffer = vk::raii::Buffer(m_context.device, bufferCI);

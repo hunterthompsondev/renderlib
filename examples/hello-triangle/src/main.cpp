@@ -101,8 +101,7 @@ bool InitializeGeometry(AppContext *context)
 
     // Create vertex buffer
     context->vertexBuffer = context->device->CreateBuffer({
-        .bufferType = BufferType::Vertex,
-        .bufferUsage = BufferUsage::Dynamic,
+        .bufferUsage = BufferUsageFlagBits::Vertex,
         .data = vertices.data(),
         .sizeInBytes = vertices.size() * sizeof(float),
     });
@@ -114,8 +113,7 @@ bool InitializeGeometry(AppContext *context)
 
     // Create index buffer
     context->indexBuffer = context->device->CreateBuffer({
-        .bufferType = BufferType::Index,
-        .bufferUsage = BufferUsage::Dynamic,
+        .bufferUsage = BufferUsageFlagBits::Index,
         .data = indices.data(),
         .sizeInBytes = indices.size() * sizeof(uint16_t),
     });
@@ -135,7 +133,7 @@ bool InitializePipeline(AppContext *context)
     std::vector<uint8_t> fragBytes = ReadFileToBytes("shaders/hello-triangle.frag.spv");
 
     ShaderModuleHandle vertexShader = context->device->CreateShaderModule({
-        .stage = ShaderStage::Vertex,
+        .stage = ShaderStageFlagBits::Vertex,
         .entryPoint = "main",
         .bytecode = vertBytes,
     });
@@ -146,7 +144,7 @@ bool InitializePipeline(AppContext *context)
     }
 
     ShaderModuleHandle fragmentShader = context->device->CreateShaderModule({
-        .stage = ShaderStage::Fragment,
+        .stage = ShaderStageFlagBits::Fragment,
         .entryPoint = "main",
         .bytecode = fragBytes,
     });
@@ -170,11 +168,11 @@ bool InitializePipeline(AppContext *context)
                         {
                             .location = 0,
                             .offset = 0,
-                            .format = VertexFormat::Float32x2,
+                            .format = Format::Float32x2,
                         },
                     },
             },
-        .cullMode = CullMode::None,
+        .cullMode = CullModeFlagBits::None,
         .depthTestEnable = false,
         .depthWriteEnable = false,
         .depthCompareOp = CompareOp::Always,
@@ -224,8 +222,8 @@ int main()
             .height = context.windowHeight,
             .colorAttachments = {{
                 .view = renderDevice->GetCurrentSwapchainImageView(context.swapchain),
-                .loadOp = LoadOp::Clear,
-                .storeOp = StoreOp::Store,
+                .loadOp = AttachmentLoadOp::Clear,
+                .storeOp = AttachmentStoreOp::Store,
                 .clearColor = {0.01f, 0.01f, 0.02f, 1.0f},
             }},
         };

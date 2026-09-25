@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "backends/vulkan/resources/VulkanShaderModule.hpp"
+#include <backends/vulkan/utils/ToVkFlags.hpp>
 
 ShaderModuleHandle VulkanDevice::CreateShaderModule(const ShaderModuleCreateInfo &desc)
 {
@@ -13,7 +13,7 @@ ShaderModuleHandle VulkanDevice::CreateShaderModule(const ShaderModuleCreateInfo
     }
 
     VulkanShaderModule shaderModule{
-        .stage = desc.stage,
+        .stage = ToVk(desc.stage),
         .entryPoint = desc.entryPoint,
     };
 

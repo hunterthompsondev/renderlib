@@ -6,6 +6,7 @@
 #include "Sampler.hpp"
 #include "Texture.hpp"
 #include <renderlib/Enums.hpp>
+#include <renderlib/Flags.hpp>
 #include <renderlib/Handles.hpp>
 
 struct DescriptorLayoutTag
@@ -23,7 +24,7 @@ struct DescriptorBindingCreateInfo
     uint32_t binding = 0;
     DescriptorType type;
     uint32_t count = 1;
-    ShaderStageFlags stageFlags = ShaderStageFlags::All;
+    ShaderStageFlags stageFlags = ShaderStageFlagBits::Fragment | ShaderStageFlagBits::Vertex;
 };
 
 struct DescriptorLayoutCreateInfo
@@ -35,7 +36,7 @@ struct PushConstantRange
 {
     uint32_t offset = 0;
     uint32_t size = 0;
-    ShaderStageFlags stageFlags = ShaderStageFlags::All;
+    ShaderStageFlags stageFlags = ShaderStageFlagBits::Fragment | ShaderStageFlagBits::Vertex;
 };
 
 struct DescriptorBindingWriteCreateInfo
@@ -57,19 +58,3 @@ struct DescriptorSetCreateInfo
     DescriptorLayoutHandle layout;
     std::vector<DescriptorBindingWriteCreateInfo> bindings;
 };
-
-// Utility Functions
-constexpr ShaderStageFlags operator|(ShaderStageFlags a, ShaderStageFlags b)
-{
-    return static_cast<ShaderStageFlags>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
-}
-
-constexpr ShaderStageFlags operator&(ShaderStageFlags a, ShaderStageFlags b)
-{
-    return static_cast<ShaderStageFlags>(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
-}
-
-constexpr bool HasFlag(ShaderStageFlags value, ShaderStageFlags flag)
-{
-    return (static_cast<uint32_t>(value) & static_cast<uint32_t>(flag)) == static_cast<uint32_t>(flag);
-}

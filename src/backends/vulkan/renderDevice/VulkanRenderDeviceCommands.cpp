@@ -1,6 +1,7 @@
 #include "VulkanRenderDevice.hpp"
 
-#include <backends/vulkan/utils/VulkanConversions.hpp>
+#include <backends/vulkan/utils/ToVkEnums.hpp>
+#include <backends/vulkan/utils/ToVkFlags.hpp>
 
 void VulkanRenderDevice::TransitionImageLayout(vk::raii::CommandBuffer &cmd, VkImage image, vk::ImageLayout oldLayout,
                                                vk::ImageLayout newLayout, vk::AccessFlags srcAccess,
@@ -91,8 +92,8 @@ void VulkanRenderDevice::BeginRendering(CommandBufferHandle cmdHandle, const Ren
         vk::RenderingAttachmentInfo attachment{};
         attachment.setImageView(device->GetVulkanImageView(color.view))
             .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
-            .setLoadOp(ToVulkanLoadOp(color.loadOp))
-            .setStoreOp(ToVulkanStoreOp(color.storeOp))
+            .setLoadOp(ToVk(color.loadOp))
+            .setStoreOp(ToVk(color.storeOp))
             .setClearValue(vk::ClearValue{
                 vk::ClearColorValue{
                     std::array{
@@ -123,8 +124,8 @@ void VulkanRenderDevice::BeginRendering(CommandBufferHandle cmdHandle, const Ren
 
         depthAttachment.setImageView(device->GetVulkanImageView(info.depthAttachment->view))
             .setImageLayout(vk::ImageLayout::eDepthAttachmentOptimal)
-            .setLoadOp(ToVulkanLoadOp(info.depthAttachment->loadOp))
-            .setStoreOp(ToVulkanStoreOp(info.depthAttachment->storeOp))
+            .setLoadOp(ToVk(info.depthAttachment->loadOp))
+            .setStoreOp(ToVk(info.depthAttachment->storeOp))
             .setClearValue(vk::ClearValue{
                 vk::ClearDepthStencilValue{
                     info.depthAttachment->clearDepth,
@@ -202,7 +203,7 @@ void VulkanRenderDevice::PushConstants(CommandBufferHandle cmdHandle, PipelineHa
     if (!cmdImpl)
         return;
     vk::PipelineLayout layout = GetVulkanDevice()->GetVulkanPipelineLayout(pipeline);
-    cmdImpl->commandBuffer->pushConstants(layout, ToVulkanShaderStageFlags(stages), offset, size, data);
+    cmdImpl->commandBuffer->pushConstants(layout, ToVk(stages), offset, size, data);
 }
 
 void VulkanRenderDevice::BindPipeline(CommandBufferHandle cmdHandle, PipelineHandle pipeline)
@@ -238,7 +239,7 @@ void VulkanRenderDevice::BindIndexBuffer(CommandBufferHandle cmdHandle, BufferHa
         return;
     }
     vk::Buffer vkBuffer = GetVulkanDevice()->GetVulkanBuffer(buffer);
-    cmdImpl->commandBuffer->bindIndexBuffer(vkBuffer, offset, ToVulkanIndexType(indexType));
+    cmdImpl->commandBuffer->bindIndexBuffer(vkBuffer, offset, ToVk(indexType));
 }
 
 void VulkanRenderDevice::BindDescriptorSet(CommandBufferHandle cmdHandle, PipelineHandle pipeline,

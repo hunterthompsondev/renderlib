@@ -10,6 +10,5 @@ struct VulkanBuffer
     vk::raii::DeviceMemory memory = nullptr;
     vk::DeviceSize size;
 
-    BufferType type;
-    BufferUsage usage;
+    vk::BufferUsageFlags usage;
 };

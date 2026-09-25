@@ -47,7 +47,8 @@ class VulkanDevice final : public Device
     void UpdateDescriptorSet(DescriptorSetHandle handle,
                              const std::vector<DescriptorBindingWriteCreateInfo> &writes) override;
 
-    TextureHandle RegisterExternalTexture(VkImage image, Format format, uint32_t width, uint32_t height);
+    TextureHandle RegisterExternalTexture(VkImage image, ImageAspectFlags imageAspectFlags, Format format,
+                                          uint32_t width, uint32_t height);
     VulkanContext m_context;
 
     // Accessors

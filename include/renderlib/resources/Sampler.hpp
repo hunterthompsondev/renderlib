@@ -10,10 +10,11 @@ using SamplerHandle = Handle<SamplerTag>;
 
 struct SamplerCreateInfo
 {
-    FilterMode magFilter = FilterMode::Linear;
-    FilterMode minFilter = FilterMode::Linear;
-    AddressMode addressModeU = AddressMode::Repeat;
-    AddressMode addressModeV = AddressMode::Repeat;
-    AddressMode addressModeW = AddressMode::Repeat;
+    Filter magFilter = Filter::Linear;
+    Filter minFilter = Filter::Linear;
+    SamplerMipmapMode mipMapMode = SamplerMipmapMode::Linear;
+    SamplerAddressMode addressModeU = SamplerAddressMode::Repeat;
+    SamplerAddressMode addressModeV = SamplerAddressMode::Repeat;
+    SamplerAddressMode addressModeW = SamplerAddressMode::Repeat;
     float maxAnisotropy = 1.0f; // 1.0 = disabled
 };

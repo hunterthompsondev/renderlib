@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include <renderlib/Enums.hpp>
+#include <renderlib/Flags.hpp>
 #include <renderlib/Handles.hpp>
 
 struct TextureTag
@@ -17,9 +18,10 @@ using TextureViewHandle = Handle<TextureViewTag>;
 
 struct TextureCreateInfo
 {
-    TextureType type;
-    TextureUsage usage;
+    ImageType type;
+    ImageUsageFlags usage;
     Format format;
+    ImageAspectFlags imageAspectFlags;
 
     uint32_t width;
     uint32_t height;
@@ -32,20 +34,7 @@ struct TextureCreateInfo
 struct TextureViewCreateInfo
 {
     TextureHandle sourceTexture;
-    TextureType viewType; // May be different from the source texture type
-    Format format;        // Source texture format is used when format is Undefined
+    ImageViewType viewType; // May be different from the source texture type
+    ImageAspectFlags imageAspectFlags;
+    Format format;
 };
-
-// Utility functions
-constexpr TextureUsage operator|(TextureUsage a, TextureUsage b)
-{
-    return static_cast<TextureUsage>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
-}
-constexpr TextureUsage operator&(TextureUsage a, TextureUsage b)
-{
-    return static_cast<TextureUsage>(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
-}
-constexpr bool hasFlag(TextureUsage value, TextureUsage flag)
-{
-    return (value & flag) == flag;
-}

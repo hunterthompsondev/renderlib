@@ -1,6 +1,7 @@
 #include "VulkanDevice.hpp"
 
-#include <backends/vulkan/utils/VulkanConversions.hpp>
+#include <backends/vulkan/utils/ToVkEnums.hpp>
+#include <backends/vulkan/utils/ToVkFlags.hpp>
 
 DescriptorLayoutHandle VulkanDevice::CreateDescriptorLayout(const DescriptorLayoutCreateInfo &desc)
 {
@@ -8,7 +9,13 @@ DescriptorLayoutHandle VulkanDevice::CreateDescriptorLayout(const DescriptorLayo
         .bindings = desc.bindings,
     };
 
-    std::vector<vk::DescriptorSetLayoutBinding> bindings = ToVulkanDescriptorSetLayoutBindings(desc.bindings);
+    std::vector<vk::DescriptorSetLayoutBinding> bindings;
+    bindings.reserve(desc.bindings.size());
+
+    for (const auto &binding : desc.bindings)
+    {
+        bindings.push_back(ToVk(binding.binding, binding.count, ToVk(binding.type), ToVk(binding.stageFlags)));
+    }
 
     vk::DescriptorSetLayoutCreateInfo layoutCI{};
     layoutCI.setBindings(bindings);
@@ -77,7 +84,7 @@ void VulkanDevice::UpdateDescriptorSet(DescriptorSetHandle handle,
     for (const auto &write : writes)
     {
         vk::WriteDescriptorSet vkWrite{};
-        vkWrite.setDstSet(*set->set).setDstBinding(write.binding).setDescriptorType(ToVulkanDescriptorType(write.type));
+        vkWrite.setDstSet(*set->set).setDstBinding(write.binding).setDescriptorType(ToVk(write.type));
 
         if (write.type == DescriptorType::UniformBuffer || write.type == DescriptorType::StorageBuffer)
         {

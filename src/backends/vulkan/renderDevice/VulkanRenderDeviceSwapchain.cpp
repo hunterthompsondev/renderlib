@@ -1,7 +1,21 @@
 #include "VulkanRenderDevice.hpp"
+#include "renderlib/Flags.hpp"
 
 #include <backends/vulkan/resources/VulkanSwapchain.hpp>
-#include <backends/vulkan/utils/VulkanConversions.hpp>
+#include <backends/vulkan/utils/ToVkEnums.hpp>
+
+constexpr bool IsDepthFormat(Format format)
+{
+    switch (format)
+    {
+    case Format::D16Unorm:
+    case Format::D32Float:
+    case Format::D24UnormS8Int:
+        return true;
+    default:
+        return false;
+    }
+}
 
 void VulkanRenderDevice::BuildSwapchainResources(VulkanSwapchain &swapchain, const SwapchainCreateInfo &desc)
 {
@@ -13,20 +27,10 @@ void VulkanRenderDevice::BuildSwapchainResources(VulkanSwapchain &swapchain, con
     std::vector<vk::PresentModeKHR> presentModes =
         context->physicalDevice.getSurfacePresentModesKHR(*swapchain.surface);
 
-    vk::Format desiredFormat = ToVulkanFormat(desc.format);
+    vk::Format desiredFormat = ToVk(desc.format);
     vk::ColorSpaceKHR colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
 
-    bool formatSupported = std::ranges::any_of(surfaceFormats, [&](const auto &format) {
-        return format.format == desiredFormat && format.colorSpace == colorSpace;
-    });
-
-    if (!formatSupported)
-    {
-        desiredFormat = surfaceFormats.front().format;
-        colorSpace = surfaceFormats.front().colorSpace;
-    }
-
-    vk::PresentModeKHR desiredPresentMode = ToVulkanPresentMode(desc.presentMode);
+    vk::PresentModeKHR desiredPresentMode = ToVk(desc.presentMode);
     if (!std::ranges::any_of(presentModes, [&](auto mode) { return mode == desiredPresentMode; }))
     {
         desiredPresentMode = vk::PresentModeKHR::eFifo;
@@ -55,7 +59,8 @@ void VulkanRenderDevice::BuildSwapchainResources(VulkanSwapchain &swapchain, con
 
     // Create swapchain
     swapchain.swapchain = vk::raii::SwapchainKHR(context->device, swapchainCI);
-    swapchain.format = desiredFormat;
+    swapchain.format = ToVk(desc.format);
+    swapchain.genericFormat = desc.format;
     swapchain.width = desc.width;
     swapchain.height = desc.height;
     swapchain.windowHandle = desc.window;
@@ -64,15 +69,17 @@ void VulkanRenderDevice::BuildSwapchainResources(VulkanSwapchain &swapchain, con
 
     for (vk::Image image : images)
     {
-        TextureHandle texture =
-            device->RegisterExternalTexture(image, FromVulkanFormat(desiredFormat), desc.width, desc.height);
+        TextureHandle texture = device->RegisterExternalTexture(
+            image, IsDepthFormat(desc.format) ? ImageAspectFlagBits::Depth : ImageAspectFlagBits::Color, desc.format,
+            desc.width, desc.height);
 
         swapchain.imageHandles.push_back(texture);
 
         TextureViewHandle view = device->CreateTextureView({
             .sourceTexture = texture,
-            .viewType = TextureType::Texture2D,
-            .format = Format::Undefined,
+            .viewType = ImageViewType::Texture2D,
+            .imageAspectFlags = ImageAspectFlagBits::Color,
+            .format = desc.format,
         });
 
         swapchain.imageViewHandles.push_back(view);
@@ -164,7 +171,7 @@ void VulkanRenderDevice::ResizeSwapchain(SwapchainHandle handle, uint32_t width,
         .window = swapchain->windowHandle,
         .width = width,
         .height = height,
-        .format = FromVulkanFormat(swapchain->format),
+        .format = swapchain->genericFormat,
         .presentMode = PresentMode::Fifo,
         .bufferCount = static_cast<uint32_t>(swapchain->inFlightFences.size()),
     };

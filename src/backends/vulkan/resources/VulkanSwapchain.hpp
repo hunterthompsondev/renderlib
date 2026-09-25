@@ -12,6 +12,7 @@ struct VulkanSwapchain
     vk::raii::SurfaceKHR surface = nullptr;
     vk::raii::SwapchainKHR swapchain = nullptr;
     vk::Format format;
+    Format genericFormat;
     vk::PresentModeKHR presentMode;
 
     uint32_t width;

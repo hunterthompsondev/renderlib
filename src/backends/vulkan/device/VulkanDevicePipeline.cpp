@@ -2,7 +2,8 @@
 
 #include <iostream>
 
-#include <backends/vulkan/utils/VulkanConversions.hpp>
+#include <backends/vulkan/utils/ToVkEnums.hpp>
+#include <backends/vulkan/utils/ToVkFlags.hpp>
 
 PipelineHandle VulkanDevice::CreatePipeline(const PipelineCreateInfo &desc)
 {
@@ -31,15 +32,33 @@ PipelineHandle VulkanDevice::CreatePipeline(const PipelineCreateInfo &desc)
         fragShaderCI,
     };
 
-    pipeline.vertexBindingDescription = ToVulkanBindingDescription(desc.vertexLayout);
-    pipeline.vertexAttributeDescription = ToVulkanAttributeDescriptions(desc.vertexLayout);
+    vk::VertexInputBindingDescription bindingDesc{};
+    bindingDesc.binding = 0;
+    bindingDesc.stride = desc.vertexLayout.stride;
+    bindingDesc.inputRate = vk::VertexInputRate::eVertex;
+    pipeline.vertexBindingDescription = bindingDesc;
+
+    std::vector<vk::VertexInputAttributeDescription> attributeDescs;
+    attributeDescs.reserve(desc.vertexLayout.attributes.size());
+
+    for (const auto &attr : desc.vertexLayout.attributes)
+    {
+        vk::VertexInputAttributeDescription attributeDesc{};
+        attributeDesc.location = attr.location;
+        attributeDesc.binding = 0;
+        attributeDesc.format = ToVk(attr.format);
+        attributeDesc.offset = attr.offset;
+
+        attributeDescs.push_back(attributeDesc);
+    }
+    pipeline.vertexAttributeDescription = attributeDescs;
 
     vk::PipelineVertexInputStateCreateInfo vertInputCI{};
     vertInputCI.setVertexBindingDescriptions(pipeline.vertexBindingDescription)
         .setVertexAttributeDescriptions(pipeline.vertexAttributeDescription);
 
     vk::PipelineInputAssemblyStateCreateInfo inputAssemblyCI{};
-    inputAssemblyCI.setTopology(ToVulkanPrimitiveTopology(desc.primitiveTopology));
+    inputAssemblyCI.setTopology(ToVk(desc.primitiveTopology));
 
     vk::PipelineViewportStateCreateInfo viewportStateCI{};
     viewportStateCI.setViewportCount(1).setScissorCount(1);
@@ -48,7 +67,7 @@ PipelineHandle VulkanDevice::CreatePipeline(const PipelineCreateInfo &desc)
     rasterizer.setDepthClampEnable(vk::False)
         .setRasterizerDiscardEnable(vk::False)
         .setPolygonMode(vk::PolygonMode::eFill)
-        .setCullMode(ToVulkanCullMode(desc.cullMode))
+        .setCullMode(ToVk(desc.cullMode))
         .setFrontFace(vk::FrontFace::eCounterClockwise)
         .setDepthBiasEnable(vk::False)
         .setLineWidth(1.0f);
@@ -59,12 +78,11 @@ PipelineHandle VulkanDevice::CreatePipeline(const PipelineCreateInfo &desc)
     vk::PipelineDepthStencilStateCreateInfo depthStencil{};
     depthStencil.setDepthTestEnable(desc.depthTestEnable)
         .setDepthWriteEnable(desc.depthWriteEnable)
-        .setDepthCompareOp(ToVulkanCompareOp(desc.depthCompareOp))
+        .setDepthCompareOp(ToVk(desc.depthCompareOp))
         .setDepthBoundsTestEnable(vk::False)
         .setStencilTestEnable(vk::False);
 
-    pipeline.colorBlendAttachments =
-        std::vector(desc.colorFormats.size(), ToVulkanColorBlendAttachment(desc.blendMode));
+    pipeline.colorBlendAttachments = std::vector(desc.colorFormats.size(), ToVk(desc.blendMode));
 
     vk::PipelineColorBlendStateCreateInfo colorBlendInfo{};
     colorBlendInfo.setLogicOpEnable(vk::False)
@@ -99,7 +117,7 @@ PipelineHandle VulkanDevice::CreatePipeline(const PipelineCreateInfo &desc)
 
     for (const PushConstantRange &range : desc.pushConstants)
     {
-        pushConstantRanges.emplace_back(ToVulkanShaderStageFlags(range.stageFlags), range.offset, range.size);
+        pushConstantRanges.emplace_back(ToVk(range.stageFlags), range.offset, range.size);
     }
 
     vk::PipelineLayoutCreateInfo layoutCI{};
@@ -113,15 +131,16 @@ PipelineHandle VulkanDevice::CreatePipeline(const PipelineCreateInfo &desc)
 
     for (Format format : desc.colorFormats)
     {
-        colorFormats.push_back(ToVulkanFormat(format));
+        colorFormats.push_back(ToVk(format));
     }
 
     vk::PipelineRenderingCreateInfo renderingInfo{};
+    // TODO: more elegant solution1
     renderingInfo.setColorAttachmentFormats(colorFormats)
-        .setDepthAttachmentFormat(desc.depthFormat != Format::Undefined ? ToVulkanFormat(desc.depthFormat)
+        .setDepthAttachmentFormat(desc.depthFormat != Format::Undefined ? ToVk(desc.depthFormat)
                                                                         : vk::Format::eUndefined)
-        .setStencilAttachmentFormat(HasStencilComponent(desc.depthFormat) ? ToVulkanFormat(desc.depthFormat)
-                                                                          : vk::Format::eUndefined);
+        .setStencilAttachmentFormat(desc.depthFormat == Format::D24UnormS8Int ? ToVk(desc.depthFormat)
+                                                                              : vk::Format::eUndefined);
 
     vk::GraphicsPipelineCreateInfo pipelineCI{};
     pipelineCI.setStages(shaderStages)

@@ -4,12 +4,26 @@
 
 #include "DescriptorSet.hpp"
 #include "ShaderModule.hpp"
+#include <renderlib/Flags.hpp>
 #include <renderlib/Handles.hpp>
 
 struct PipelineTag
 {
 };
 using PipelineHandle = Handle<PipelineTag>;
+
+struct VertexAttribute
+{
+    uint32_t location;
+    uint32_t offset;
+    Format format;
+};
+
+struct VertexLayout
+{
+    uint32_t stride;
+    std::vector<VertexAttribute> attributes;
+};
 
 struct PipelineCreateInfo
 {
@@ -22,7 +36,7 @@ struct PipelineCreateInfo
     VertexLayout vertexLayout;
 
     PrimitiveTopology primitiveTopology = PrimitiveTopology::TriangleList;
-    CullMode cullMode = CullMode::Back;
+    CullModeFlags cullMode = CullModeFlagBits::Back;
 
     bool depthTestEnable = true;
     bool depthWriteEnable = true;
