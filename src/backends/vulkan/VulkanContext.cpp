@@ -209,7 +209,6 @@ bool VulkanContext::Initialize(bool enableValidationLayers)
     vk::CommandPoolCreateInfo commandPoolInfo = vk::CommandPoolCreateInfo{}
                                                     .setQueueFamilyIndex(graphicsQueueIndex)
                                                     .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
-    commandPool = vk::raii::CommandPool(device, commandPoolInfo);
 
     std::cout << "[Vulkan Context] Initialization successful\n";
 

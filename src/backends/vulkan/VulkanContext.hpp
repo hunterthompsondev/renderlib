@@ -21,6 +21,5 @@ struct VulkanContext
     vk::raii::Queue graphicsQueue = nullptr;
     uint32_t graphicsQueueIndex = UINT32_MAX;
 
-    vk::raii::CommandPool commandPool = nullptr;
     vk::raii::DescriptorPool descriptorPool = nullptr;
 };

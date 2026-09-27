@@ -149,10 +149,16 @@ void VulkanDevice::UpdateTexture(TextureHandle handle, uint32_t mipLevel, uint32
     stagingMemory.unmapMemory();
 
     // Record a one-shot command buffer: transition -> copy -> transition
+
+    // Temporary fix
+    // Command buffer creation and control will eventually be exposed directly in Device API
+    // and a command buffer handle will need to be passed
+    vk::CommandPoolCreateInfo commandPoolInfo = vk::CommandPoolCreateInfo{}
+                                                    .setQueueFamilyIndex(m_context.graphicsQueueIndex)
+                                                    .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
+    vk::raii::CommandPool cmdPool(m_context.device, commandPoolInfo);
     vk::CommandBufferAllocateInfo cmdAllocInfo{};
-    cmdAllocInfo.setCommandPool(*m_context.commandPool)
-        .setLevel(vk::CommandBufferLevel::ePrimary)
-        .setCommandBufferCount(1);
+    cmdAllocInfo.setCommandPool(cmdPool).setLevel(vk::CommandBufferLevel::ePrimary).setCommandBufferCount(1);
     vk::raii::CommandBuffers cmdBuffers(m_context.device, cmdAllocInfo);
     vk::raii::CommandBuffer &cmd = cmdBuffers.front();
 
