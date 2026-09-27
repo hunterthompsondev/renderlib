@@ -3,7 +3,7 @@
 #include <backends/vulkan/utils/ToVkEnums.hpp>
 #include <backends/vulkan/utils/ToVkFlags.hpp>
 
-void VulkanRenderDevice::TransitionImageLayout(vk::raii::CommandBuffer &cmd, VkImage image, vk::ImageLayout oldLayout,
+void VulkanRenderDevice::TransitionImageLayout(vk::CommandBuffer cmd, VkImage image, vk::ImageLayout oldLayout,
                                                vk::ImageLayout newLayout, vk::AccessFlags srcAccess,
                                                vk::AccessFlags dstAccess, vk::PipelineStageFlags srcStage,
                                                vk::PipelineStageFlags dstStage, vk::ImageAspectFlags aspectMask)
@@ -27,20 +27,27 @@ CommandBufferHandle VulkanRenderDevice::BeginFrame(SwapchainHandle handle)
         return {};
     }
 
-    vk::raii::CommandBuffer &cmd = swapchain->commandBuffers[swapchain->currentFrameIndex];
-    cmd.reset();
+    CommandBufferHandle cmdHandle = swapchain->commandBuffers[swapchain->currentFrameIndex];
+    VulkanCommandBuffer *cmd = m_commandBufferPool.Get(cmdHandle);
+    if (!cmd)
+    {
+        return {};
+    }
+
+    cmd->buffer.reset();
 
     vk::CommandBufferBeginInfo beginInfo{};
     beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 
-    cmd.begin(beginInfo);
+    cmd->buffer.begin(beginInfo);
 
-    TransitionImageLayout(cmd, GetVulkanDevice()->GetVulkanImage(swapchain->imageHandles[swapchain->currentImageIndex]),
+    TransitionImageLayout(cmd->buffer,
+                          GetVulkanDevice()->GetVulkanImage(swapchain->imageHandles[swapchain->currentImageIndex]),
                           vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal, {},
                           vk::AccessFlagBits::eColorAttachmentWrite, vk::PipelineStageFlagBits::eTopOfPipe,
                           vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::ImageAspectFlagBits::eColor);
 
-    return m_commandBufferPool.Create(VulkanCommandBuffer{.commandBuffer = &cmd});
+    return cmdHandle;
 }
 
 void VulkanRenderDevice::EndFrame(SwapchainHandle handle)
@@ -53,22 +60,27 @@ void VulkanRenderDevice::EndFrame(SwapchainHandle handle)
 
     VulkanContext *context = &GetVulkanDevice()->m_context;
     uint32_t frameIdx = swapchain->currentFrameIndex;
-    vk::raii::CommandBuffer &cmd = swapchain->commandBuffers[frameIdx];
+    CommandBufferHandle cmdHandle = swapchain->commandBuffers[frameIdx];
+    VulkanCommandBuffer *cmd = m_commandBufferPool.Get(cmdHandle);
+    if (!cmd)
+    {
+        return;
+    }
 
-    TransitionImageLayout(cmd, GetVulkanDevice()->GetVulkanImage(swapchain->imageHandles[swapchain->currentImageIndex]),
-                          vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR,
-                          vk::AccessFlagBits::eColorAttachmentWrite, {},
-                          vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eBottomOfPipe,
-                          vk::ImageAspectFlagBits::eColor);
+    TransitionImageLayout(
+        cmd->buffer, GetVulkanDevice()->GetVulkanImage(swapchain->imageHandles[swapchain->currentImageIndex]),
+        vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR,
+        vk::AccessFlagBits::eColorAttachmentWrite, {}, vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits::eBottomOfPipe, vk::ImageAspectFlagBits::eColor);
 
-    cmd.end();
+    cmd->buffer.end();
 
     vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
     vk::SubmitInfo submitInfo{};
     submitInfo.setWaitSemaphores(*swapchain->imageAvailableSemaphores[frameIdx])
         .setWaitDstStageMask(waitStage)
-        .setCommandBuffers(*cmd)
+        .setCommandBuffers(*cmd->buffer)
         .setSignalSemaphores(*swapchain->renderCompleteSemaphores[frameIdx]);
 
     context->graphicsQueue.submit(submitInfo, *swapchain->inFlightFences[frameIdx]);
@@ -117,7 +129,7 @@ void VulkanRenderDevice::BeginRendering(CommandBufferHandle cmdHandle, const Ren
     if (info.depthAttachment)
     {
         TextureHandle depthTexture = device->GetSourceTextureForView(info.depthAttachment->view);
-        TransitionImageLayout(*cmd->commandBuffer, device->GetVulkanImage(depthTexture), vk::ImageLayout::eUndefined,
+        TransitionImageLayout(cmd->buffer, device->GetVulkanImage(depthTexture), vk::ImageLayout::eUndefined,
                               vk::ImageLayout::eDepthAttachmentOptimal, {},
                               vk::AccessFlagBits::eDepthStencilAttachmentWrite, vk::PipelineStageFlagBits::eTopOfPipe,
                               vk::PipelineStageFlagBits::eEarlyFragmentTests, vk::ImageAspectFlagBits::eDepth);
@@ -136,7 +148,7 @@ void VulkanRenderDevice::BeginRendering(CommandBufferHandle cmdHandle, const Ren
         renderingInfo.setPDepthAttachment(&depthAttachment);
     }
 
-    cmd->commandBuffer->beginRendering(renderingInfo);
+    cmd->buffer.beginRendering(renderingInfo);
 }
 
 void VulkanRenderDevice::EndRendering(CommandBufferHandle cmdHandle)
@@ -147,7 +159,7 @@ void VulkanRenderDevice::EndRendering(CommandBufferHandle cmdHandle)
         return;
     }
 
-    cmd->commandBuffer->endRendering();
+    cmd->buffer.endRendering();
 }
 
 void VulkanRenderDevice::SetViewport(CommandBufferHandle cmdHandle, float x, float y, float width, float height)
@@ -158,7 +170,7 @@ void VulkanRenderDevice::SetViewport(CommandBufferHandle cmdHandle, float x, flo
         return;
     }
 
-    cmd->commandBuffer->setViewport(0, vk::Viewport{x, y, width, height, 0.0f, 1.0f});
+    cmd->buffer.setViewport(0, vk::Viewport{x, y, width, height, 0.0f, 1.0f});
 }
 
 void VulkanRenderDevice::SetScissor(CommandBufferHandle cmdHandle, int32_t x, int32_t y, uint32_t width,
@@ -170,7 +182,7 @@ void VulkanRenderDevice::SetScissor(CommandBufferHandle cmdHandle, int32_t x, in
         return;
     }
 
-    cmd->commandBuffer->setScissor(0, vk::Rect2D{{x, y}, {width, height}});
+    cmd->buffer.setScissor(0, vk::Rect2D{{x, y}, {width, height}});
 }
 
 void VulkanRenderDevice::Draw(CommandBufferHandle cmdHandle, uint32_t vertexCount, uint32_t instanceCount,
@@ -182,7 +194,7 @@ void VulkanRenderDevice::Draw(CommandBufferHandle cmdHandle, uint32_t vertexCoun
         return;
     }
 
-    cmd->commandBuffer->draw(vertexCount, instanceCount, firstVertex, firstInstance);
+    cmd->buffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);
 }
 
 void VulkanRenderDevice::DrawIndexed(CommandBufferHandle cmdHandle, uint32_t indexCount, uint32_t instanceCount,
@@ -193,7 +205,7 @@ void VulkanRenderDevice::DrawIndexed(CommandBufferHandle cmdHandle, uint32_t ind
     {
         return;
     }
-    cmdImpl->commandBuffer->drawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+    cmdImpl->buffer.drawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 }
 
 void VulkanRenderDevice::PushConstants(CommandBufferHandle cmdHandle, PipelineHandle pipeline, ShaderStageFlags stages,
@@ -203,7 +215,7 @@ void VulkanRenderDevice::PushConstants(CommandBufferHandle cmdHandle, PipelineHa
     if (!cmdImpl)
         return;
     vk::PipelineLayout layout = GetVulkanDevice()->GetVulkanPipelineLayout(pipeline);
-    cmdImpl->commandBuffer->pushConstants(layout, ToVk(stages), offset, size, data);
+    cmdImpl->buffer.pushConstants(layout, ToVk(stages), offset, size, data);
 }
 
 void VulkanRenderDevice::BindPipeline(CommandBufferHandle cmdHandle, PipelineHandle pipeline)
@@ -214,7 +226,7 @@ void VulkanRenderDevice::BindPipeline(CommandBufferHandle cmdHandle, PipelineHan
         return;
     }
 
-    cmd->commandBuffer->bindPipeline(vk::PipelineBindPoint::eGraphics, GetVulkanDevice()->GetVulkanPipeline(pipeline));
+    cmd->buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, GetVulkanDevice()->GetVulkanPipeline(pipeline));
 }
 
 void VulkanRenderDevice::BindVertexBuffer(CommandBufferHandle cmdHandle, BufferHandle buffer, uint32_t binding,
@@ -227,7 +239,7 @@ void VulkanRenderDevice::BindVertexBuffer(CommandBufferHandle cmdHandle, BufferH
     }
     vk::Buffer vkBuffer = GetVulkanDevice()->GetVulkanBuffer(buffer);
     vk::DeviceSize vkOffset = offset;
-    cmdImpl->commandBuffer->bindVertexBuffers(binding, vkBuffer, vkOffset);
+    cmdImpl->buffer.bindVertexBuffers(binding, vkBuffer, vkOffset);
 }
 
 void VulkanRenderDevice::BindIndexBuffer(CommandBufferHandle cmdHandle, BufferHandle buffer, IndexType indexType,
@@ -239,7 +251,7 @@ void VulkanRenderDevice::BindIndexBuffer(CommandBufferHandle cmdHandle, BufferHa
         return;
     }
     vk::Buffer vkBuffer = GetVulkanDevice()->GetVulkanBuffer(buffer);
-    cmdImpl->commandBuffer->bindIndexBuffer(vkBuffer, offset, ToVk(indexType));
+    cmdImpl->buffer.bindIndexBuffer(vkBuffer, offset, ToVk(indexType));
 }
 
 void VulkanRenderDevice::BindDescriptorSet(CommandBufferHandle cmdHandle, PipelineHandle pipeline,
@@ -254,5 +266,5 @@ void VulkanRenderDevice::BindDescriptorSet(CommandBufferHandle cmdHandle, Pipeli
     vk::PipelineLayout layout = device->GetVulkanPipelineLayout(pipeline);
     vk::DescriptorSet set = device->GetVulkanDescriptorSet(setHandle);
 
-    cmdImpl->commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, setIndex, set, {});
+    cmdImpl->buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, setIndex, set, {});
 }

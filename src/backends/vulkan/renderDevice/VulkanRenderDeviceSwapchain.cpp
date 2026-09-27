@@ -3,6 +3,7 @@
 
 #include <backends/vulkan/resources/VulkanSwapchain.hpp>
 #include <backends/vulkan/utils/ToVkEnums.hpp>
+#include <vulkan/vulkan_raii.hpp>
 
 constexpr bool IsDepthFormat(Format format)
 {
@@ -95,12 +96,26 @@ void VulkanRenderDevice::BuildSwapchainResources(VulkanSwapchain &swapchain, con
                                                   vk::FenceCreateInfo{}.setFlags(vk::FenceCreateFlagBits::eSignaled));
         }
 
+        // Temporary fix to maintain a working exammple until RenderDevice is refactored away.
+        // Command buffer creation and control will eventually be exposed directly in Device API.
+        vk::CommandPoolCreateInfo commandPoolInfo = vk::CommandPoolCreateInfo{}
+                                                        .setQueueFamilyIndex(context->graphicsQueueIndex)
+                                                        .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
+        vk::raii::CommandPool cmdPool(context->device, commandPoolInfo);
+        VulkanCommandBuffer vulkanCmdBuffer{.pool = std::move(cmdPool)};
+
         vk::CommandBufferAllocateInfo allocInfo{};
-        allocInfo.setCommandPool(*context->commandPool)
+        allocInfo.setCommandPool(*vulkanCmdBuffer.pool)
             .setLevel(vk::CommandBufferLevel::ePrimary)
             .setCommandBufferCount(static_cast<uint32_t>(images.size()));
 
-        swapchain.commandBuffers = vk::raii::CommandBuffers(context->device, allocInfo);
+        vk::raii::CommandBuffers commandBuffers(context->device, allocInfo);
+        for (auto &cmdBuffer : commandBuffers)
+        {
+            vulkanCmdBuffer.buffer = std::move(cmdBuffer);
+            CommandBufferHandle cmdHandle = m_commandBufferPool.Create(std::move(vulkanCmdBuffer));
+            swapchain.commandBuffers.push_back(cmdHandle);
+        }
     }
 
     swapchain.currentFrameIndex = 0;

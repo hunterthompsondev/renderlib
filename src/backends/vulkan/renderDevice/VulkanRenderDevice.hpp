@@ -51,7 +51,7 @@ class VulkanRenderDevice final : public RenderDevice
 
     void BuildSwapchainResources(VulkanSwapchain &impl, const SwapchainCreateInfo &desc);
     void DestroySwapchainResources(VulkanSwapchain &impl);
-    void TransitionImageLayout(vk::raii::CommandBuffer &cmd, VkImage image, vk::ImageLayout oldLayout,
+    void TransitionImageLayout(vk::CommandBuffer cmd, VkImage image, vk::ImageLayout oldLayout,
                                vk::ImageLayout newLayout, vk::AccessFlags srcAccess, vk::AccessFlags dstAccess,
                                vk::PipelineStageFlags srcStage, vk::PipelineStageFlags dstStage,
                                vk::ImageAspectFlags aspectMask);

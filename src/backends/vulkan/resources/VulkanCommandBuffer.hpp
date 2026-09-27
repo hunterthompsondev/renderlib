@@ -4,5 +4,6 @@
 
 struct VulkanCommandBuffer
 {
-    vk::raii::CommandBuffer *commandBuffer = nullptr;
+    vk::raii::CommandPool pool = nullptr;
+    vk::raii::CommandBuffer buffer = nullptr;
 };

@@ -4,6 +4,7 @@
 
 #include <vulkan/vulkan_raii.hpp>
 
+#include <renderlib/resources/CommandBuffer.hpp>
 #include <renderlib/resources/Swapchain.hpp>
 #include <renderlib/resources/Texture.hpp>
 
@@ -20,7 +21,7 @@ struct VulkanSwapchain
 
     std::vector<TextureHandle> imageHandles;
     std::vector<TextureViewHandle> imageViewHandles;
-    std::vector<vk::raii::CommandBuffer> commandBuffers;
+    std::vector<CommandBufferHandle> commandBuffers;
 
     std::vector<vk::raii::Semaphore> imageAvailableSemaphores;
     std::vector<vk::raii::Semaphore> renderCompleteSemaphores;
