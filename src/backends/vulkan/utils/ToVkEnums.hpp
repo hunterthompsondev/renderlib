@@ -223,6 +223,23 @@ constexpr vk::IndexType ToVk(IndexType type)
     }
 }
 
+constexpr vk::ImageLayout ToVk(ImageLayout layout)
+{
+    switch (layout)
+    {
+    case ImageLayout::Undefined:
+        return vk::ImageLayout::eUndefined;
+    case ImageLayout::ColorAttachmentOptimal:
+        return vk::ImageLayout::eColorAttachmentOptimal;
+    case ImageLayout::DepthAttachmentOptimal:
+        return vk::ImageLayout::eDepthAttachmentOptimal;
+    case ImageLayout::TransferSrcOptimal:
+        return vk::ImageLayout::eTransferSrcOptimal;
+    case ImageLayout::PresentSrcKHR:
+        return vk::ImageLayout::ePresentSrcKHR;
+    }
+}
+
 inline vk::PipelineColorBlendAttachmentState ToVk(BlendMode mode)
 {
     vk::PipelineColorBlendAttachmentState state{};

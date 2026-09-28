@@ -94,12 +94,18 @@ template <typename E> class Flags
         return Name(a) | Name(b);                                                                                      \
     }
 
+// NOTE: all flag-bit enums below are backed by uint8_t (8 bits). Several are now fully or nearly
+// packed (see per-enum comments) -- widen the underlying type if you need to add more bits later.
+
 enum class BufferUsageFlagBits : uint8_t
 {
     Index = 1,
     Vertex = 1 << 1,
     Uniform = 1 << 2,
     Storage = 1 << 3,
+    TransferSrc = 1 << 4,
+    TransferDst = 1 << 5,
+    Indirect = 1 << 6, // buffer usable as the argument source for indirect draw/dispatch calls
 };
 DEFINE_FLAGS(BufferUsageFlagBits, BufferUsageFlags)
 
@@ -115,17 +121,22 @@ enum class ShaderStageFlagBits : uint8_t
 {
     Vertex = 1,
     Fragment = 1 << 1,
+    Compute = 1 << 2,
+    Geometry = 1 << 3,
+    TessellationControl = 1 << 4,
+    TessellationEvaluation = 1 << 5,
 };
 DEFINE_FLAGS(ShaderStageFlagBits, ShaderStageFlags)
 
 enum class ImageUsageFlagBits : uint8_t
 {
     Sampled = 1,
-    RenderTarget = 1 << 1,
+    ColorAttachment = 1 << 1,
     DepthStencil = 1 << 2,
     Storage = 1 << 3,
     TransferSrc = 1 << 4,
     TransferDst = 1 << 5,
+    InputAttachment = 1 << 6, // readable as a subpass input attachment (e.g. deferred shading G-buffer read)
 };
 DEFINE_FLAGS(ImageUsageFlagBits, ImageUsageFlags)
 
@@ -136,3 +147,31 @@ enum class ImageAspectFlagBits : uint8_t
     Stencil = 1 << 2,
 };
 DEFINE_FLAGS(ImageAspectFlagBits, ImageAspectFlags)
+
+// Fully packed: all 8 bits of uint8_t are now in use.
+enum class AccessFlagBits : uint8_t
+{
+    ColorAttachmentWrite = 1,
+    DepthStencilAttachmentWrite = 1 << 1,
+    ColorAttachmentRead = 1 << 2,
+    DepthStencilAttachmentRead = 1 << 3,
+    TransferRead = 1 << 4,
+    TransferWrite = 1 << 5,
+    ShaderRead = 1 << 6,
+    ShaderWrite = 1 << 7,
+};
+DEFINE_FLAGS(AccessFlagBits, AccessFlags)
+
+// Fully packed: all 8 bits of uint8_t are now in use.
+enum class PipelineStageFlagBits : uint8_t
+{
+    TopOfPipe = 1,
+    ColorAttachmentOutput = 1 << 1,
+    BottomOfPipe = 1 << 2,
+    EarlyFragmentTests = 1 << 3,
+    LateFragmentTests = 1 << 4,
+    FragmentShader = 1 << 5,
+    VertexShader = 1 << 6,
+    Transfer = 1 << 7,
+};
+DEFINE_FLAGS(PipelineStageFlagBits, PipelineStageFlags)

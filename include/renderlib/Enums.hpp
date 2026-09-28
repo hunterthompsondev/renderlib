@@ -3,6 +3,20 @@
 #include <cstdint>
 #include <vector>
 
+struct Offset3D
+{
+    int32_t x = 0;
+    int32_t y = 0;
+    int32_t z = 0;
+};
+
+struct Extent3D
+{
+    uint32_t width = 0;
+    uint32_t height = 0;
+    uint32_t depth = 1;
+};
+
 enum class Format : uint8_t
 {
     Undefined,
@@ -127,4 +141,13 @@ enum class BlendMode : uint8_t
     Opaque,
     Alpha,
     Additive,
+};
+
+enum class ImageLayout : uint8_t
+{
+    Undefined,
+    ColorAttachmentOptimal,
+    DepthAttachmentOptimal,
+    TransferSrcOptimal,
+    PresentSrcKHR,
 };
