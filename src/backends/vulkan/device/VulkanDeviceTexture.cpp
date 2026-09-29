@@ -107,6 +107,98 @@ void VulkanDevice::DestroyTextureView(TextureViewHandle handle)
     m_textureViewPool.Destroy(handle);
 }
 
+void VulkanDevice::UpdateTexture(CommandBufferHandle cmdHandle, TextureHandle handle, uint32_t mipLevel,
+                                 uint32_t arrayLayer, std::span<const uint8_t> data)
+{
+    VulkanTexture *textureImpl = m_texturePool.Get(handle);
+    if (!textureImpl)
+    {
+        std::cerr << "[Vulkan Device] UpdateTexture called with invalid texture handle\n";
+        return;
+    }
+    VulkanCommandBuffer *cmdImpl = m_commandBufferPool.Get(cmdHandle);
+    if (!cmdImpl)
+    {
+        std::cerr << "[Vulkan Device] UpdateTexture called with invalid command buffer handle\n";
+        return;
+    }
+
+    if (data.empty())
+    {
+        return;
+    }
+
+    // Create a host-visible staging buffer
+    vk::BufferCreateInfo stagingBufferInfo{};
+    stagingBufferInfo.setSize(data.size())
+        .setUsage(vk::BufferUsageFlagBits::eTransferSrc)
+        .setSharingMode(vk::SharingMode::eExclusive);
+    vk::raii::Buffer stagingBuffer(m_context.device, stagingBufferInfo);
+
+    vk::MemoryRequirements stagingMemReq = stagingBuffer.getMemoryRequirements();
+    uint32_t stagingMemType =
+        FindMemoryType(m_context.physicalDevice, stagingMemReq.memoryTypeBits,
+                       vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+    if (stagingMemType == UINT32_MAX)
+    {
+        std::cerr << "[Vulkan Device] UpdateTexture: no suitable staging memory type found\n";
+        return;
+    }
+
+    vk::MemoryAllocateInfo stagingAllocInfo{};
+    stagingAllocInfo.setAllocationSize(stagingMemReq.size).setMemoryTypeIndex(stagingMemType);
+    vk::raii::DeviceMemory stagingMemory(m_context.device, stagingAllocInfo);
+    stagingBuffer.bindMemory(*stagingMemory, 0);
+
+    void *mapped = stagingMemory.mapMemory(0, data.size());
+    std::memcpy(mapped, data.data(), data.size());
+    stagingMemory.unmapMemory();
+
+    vk::ImageSubresourceRange range{};
+    range.setAspectMask(textureImpl->imageAspectFlags)
+        .setBaseMipLevel(mipLevel)
+        .setLevelCount(1)
+        .setBaseArrayLayer(arrayLayer)
+        .setLayerCount(1);
+
+    // Undefined -> TransferDstOptimal
+    vk::ImageMemoryBarrier toTransferDst{};
+    toTransferDst.setOldLayout(vk::ImageLayout::eUndefined)
+        .setNewLayout(vk::ImageLayout::eTransferDstOptimal)
+        .setImage(textureImpl->imageHandle)
+        .setSubresourceRange(range)
+        .setSrcAccessMask({})
+        .setDstAccessMask(vk::AccessFlagBits::eTransferWrite);
+    cmdImpl->buffer.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer, {}, {},
+                                    {}, toTransferDst);
+
+    // Copy staging buffer -> image
+    vk::BufferImageCopy copyRegion{};
+    copyRegion.setBufferOffset(0)
+        .setBufferRowLength(0)   // 0 = tightly packed
+        .setBufferImageHeight(0) // 0 = tightly packed
+        .setImageSubresource(vk::ImageSubresourceLayers{textureImpl->imageAspectFlags, mipLevel, arrayLayer, 1})
+        .setImageOffset({0, 0, 0})
+        .setImageExtent({
+            std::max(textureImpl->width >> mipLevel, 1u),
+            std::max(textureImpl->height >> mipLevel, 1u),
+            1,
+        });
+    cmdImpl->buffer.copyBufferToImage(*stagingBuffer, textureImpl->imageHandle, vk::ImageLayout::eTransferDstOptimal,
+                                      copyRegion);
+
+    // TransferDstOptimal -> ShaderReadOnlyOptimal
+    vk::ImageMemoryBarrier toShaderRead{};
+    toShaderRead.setOldLayout(vk::ImageLayout::eTransferDstOptimal)
+        .setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+        .setImage(textureImpl->imageHandle)
+        .setSubresourceRange(range)
+        .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
+        .setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+    cmdImpl->buffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader,
+                                    {}, {}, {}, toShaderRead);
+}
+
 void VulkanDevice::UpdateTexture(TextureHandle handle, uint32_t mipLevel, uint32_t arrayLayer,
                                  std::span<const uint8_t> data)
 {
@@ -214,6 +306,50 @@ void VulkanDevice::UpdateTexture(TextureHandle handle, uint32_t mipLevel, uint32
     submitInfo.setCommandBuffers(*cmd);
     m_context.graphicsQueue.submit(submitInfo);
     m_context.graphicsQueue.waitIdle();
+}
+
+void VulkanDevice::CopyTextureToBuffer(CommandBufferHandle cmdHandle, TextureHandle handle, BufferHandle dstBuffer,
+                                       Offset3D offset, Extent3D extent)
+{
+    VulkanCommandBuffer *cmd = m_commandBufferPool.Get(cmdHandle);
+    VulkanTexture *texture = m_texturePool.Get(handle);
+    VulkanBuffer *buffer = m_bufferPool.Get(dstBuffer);
+
+    vk::BufferImageCopy region{};
+    region.setBufferOffset(0)
+        .setBufferRowLength(0)
+        .setBufferImageHeight(0)
+        .setImageSubresource(vk::ImageSubresourceLayers{vk::ImageAspectFlagBits::eColor, 0, 0, 1})
+        .setImageOffset({offset.x, offset.y, offset.z})
+        .setImageExtent({extent.width, extent.height, extent.depth});
+    cmd->buffer.copyImageToBuffer(texture->imageHandle, vk::ImageLayout::eTransferSrcOptimal, buffer->buffer, {region});
+}
+
+void VulkanDevice::TransitionTextureLayout(CommandBufferHandle cmdHandle, TextureHandle handle, ImageLayout oldLayout,
+                                           ImageLayout newLayout, AccessFlags srcAccess, AccessFlags dstAccess,
+                                           PipelineStageFlags srcStage, PipelineStageFlags dstStage,
+                                           ImageAspectFlags aspectMask)
+{
+    VulkanCommandBuffer *cmd = m_commandBufferPool.Get(cmdHandle);
+    VulkanTexture *texture = m_texturePool.Get(handle);
+    TransitionTextureLayout(cmd->buffer, texture->imageHandle, ToVk(oldLayout), ToVk(newLayout), ToVk(srcAccess),
+                            ToVk(dstAccess), ToVk(srcStage), ToVk(dstStage), ToVk(aspectMask));
+}
+
+void VulkanDevice::TransitionTextureLayout(vk::CommandBuffer cmd, vk::Image image, vk::ImageLayout oldLayout,
+                                           vk::ImageLayout newLayout, vk::AccessFlags srcAccess,
+                                           vk::AccessFlags dstAccess, vk::PipelineStageFlags srcStage,
+                                           vk::PipelineStageFlags dstStage, vk::ImageAspectFlags aspectMask)
+{
+    vk::ImageMemoryBarrier barrier{};
+    barrier.setOldLayout(oldLayout)
+        .setNewLayout(newLayout)
+        .setImage(image)
+        .setSubresourceRange({aspectMask, 0, 1, 0, 1})
+        .setSrcAccessMask(srcAccess)
+        .setDstAccessMask(dstAccess);
+
+    cmd.pipelineBarrier(srcStage, dstStage, {}, {}, {}, barrier);
 }
 
 TextureHandle VulkanDevice::RegisterExternalTexture(VkImage image, ImageAspectFlags imageAspectFlags, Format format,

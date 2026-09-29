@@ -34,8 +34,16 @@ class VulkanDevice final : public Device
     TextureViewHandle CreateTextureView(const TextureViewCreateInfo &desc) override;
     void DestroyTexture(TextureHandle handle) override;
     void DestroyTextureView(TextureViewHandle handle) override;
+    void UpdateTexture(CommandBufferHandle cmdHanlder, TextureHandle handle, uint32_t mipLevel, uint32_t arrayLayer,
+                       std::span<const uint8_t> data) override;
     void UpdateTexture(TextureHandle handle, uint32_t mipLevel, uint32_t arrayLayer,
                        std::span<const uint8_t> data) override;
+    void CopyTextureToBuffer(CommandBufferHandle cmdHandle, TextureHandle handle, BufferHandle dstBuffer,
+                             Offset3D offset, Extent3D extent) override;
+    void TransitionTextureLayout(CommandBufferHandle cmdHandle, TextureHandle handle, ImageLayout oldLayout,
+                                 ImageLayout newLayout, AccessFlags srcAccess, AccessFlags dstAccess,
+                                 PipelineStageFlags srcStage, PipelineStageFlags dstStage,
+                                 ImageAspectFlags aspectMask) override;
 
     SamplerHandle CreateSampler(const SamplerCreateInfo &desc) override;
     void DestroySampler(SamplerHandle handle) override;
@@ -74,4 +82,9 @@ class VulkanDevice final : public Device
     ResourcePool<VulkanDescriptorLayout, DescriptorLayoutTag> m_descriptorLayoutPool;
     ResourcePool<VulkanDescriptorSet, DescriptorSetTag> m_descriptorSetPool;
     ResourcePool<VulkanCommandBuffer, CommandBufferTag> m_commandBufferPool;
+
+    void TransitionTextureLayout(vk::CommandBuffer cmd, vk::Image image, vk::ImageLayout oldLayout,
+                                 vk::ImageLayout newLayout, vk::AccessFlags srcAccess, vk::AccessFlags dstAccess,
+                                 vk::PipelineStageFlags srcStage, vk::PipelineStageFlags dstStage,
+                                 vk::ImageAspectFlags aspectMask);
 };

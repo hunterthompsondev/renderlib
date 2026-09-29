@@ -42,8 +42,18 @@ class Device
     virtual TextureViewHandle CreateTextureView(const TextureViewCreateInfo &desc) = 0;
     virtual void DestroyTexture(TextureHandle handle) = 0;
     virtual void DestroyTextureView(TextureViewHandle handle) = 0;
+    // Records but does not submit
+    virtual void UpdateTexture(CommandBufferHandle cmdHandle, TextureHandle handle, uint32_t mipLevel,
+                               uint32_t arrayLayer, std::span<const uint8_t> data) = 0;
+    // Creates a command buffer and submits. Will be deprecated.
     virtual void UpdateTexture(TextureHandle handle, uint32_t mipLevel, uint32_t arrayLayer,
                                std::span<const uint8_t> data) = 0;
+    virtual void CopyTextureToBuffer(CommandBufferHandle cmdHandle, TextureHandle handle, BufferHandle dstBuffer,
+                                     Offset3D offset, Extent3D extent) = 0;
+    virtual void TransitionTextureLayout(CommandBufferHandle cmdHandle, TextureHandle handle, ImageLayout oldLayout,
+                                         ImageLayout newLayout, AccessFlags srcAccess, AccessFlags dstAccess,
+                                         PipelineStageFlags srcStage, PipelineStageFlags dstStage,
+                                         ImageAspectFlags aspectMask) = 0;
 
     virtual SamplerHandle CreateSampler(const SamplerCreateInfo &createInfo) = 0;
     virtual void DestroySampler(SamplerHandle handle) = 0;
