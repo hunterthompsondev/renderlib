@@ -4,6 +4,7 @@
 #include <memory>
 #include <span>
 
+#include <renderlib/RenderingInfo.hpp>
 #include <renderlib/resources/Buffer.hpp>
 #include <renderlib/resources/CommandBuffer.hpp>
 #include <renderlib/resources/Pipeline.hpp>
@@ -68,6 +69,30 @@ class Device
 
     virtual CommandBufferHandle CreateCommandBuffer() = 0;
     virtual void DestroyCommandBuffer(CommandBufferHandle handle) = 0;
+    virtual void BeginRecording(CommandBufferHandle handle) = 0;
+    virtual void EndRecording(CommandBufferHandle handle) = 0;
+    virtual void BeginRendering(CommandBufferHandle cmd, const RenderingInfo &info) = 0;
+    virtual void EndRendering(CommandBufferHandle cmd) = 0;
+    virtual void OffscreenSubmit(CommandBufferHandle handle) = 0;
+
+    // Command Recording
+    virtual void SetViewport(CommandBufferHandle cmd, float x, float y, float width, float height) = 0;
+    virtual void SetScissor(CommandBufferHandle cmd, int32_t x, int32_t y, uint32_t width, uint32_t height) = 0;
+    virtual void Draw(CommandBufferHandle cmd, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex,
+                      uint32_t firstInstance) = 0;
+    virtual void DrawIndexed(CommandBufferHandle cmd, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex,
+                             int32_t vertexOffset, uint32_t firstInstance) = 0;
+    virtual void PushConstants(CommandBufferHandle cmd, PipelineHandle pipeline, ShaderStageFlags stages,
+                               uint32_t offset, uint32_t size, const void *data) = 0;
+
+    virtual void BindPipeline(CommandBufferHandle cmd, PipelineHandle pipeline) = 0;
+    virtual void BindVertexBuffer(CommandBufferHandle cmd, BufferHandle buffer, uint32_t binding = 0,
+                                  uint64_t offset = 0) = 0;
+    virtual void BindIndexBuffer(CommandBufferHandle cmd, BufferHandle buffer, IndexType indexType,
+                                 uint64_t offset = 0) = 0;
+    virtual void BindDescriptorSet(CommandBufferHandle cmd, PipelineHandle pipeline, DescriptorSetHandle set,
+                                   uint32_t setIndex = 0) = 0;
+
     virtual void WaitIdle() = 0;
 
   protected:

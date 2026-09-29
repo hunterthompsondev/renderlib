@@ -3,6 +3,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     device/VulkanDeviceAccessors.cpp
     device/VulkanDeviceBuffer.cpp
     device/VulkanDeviceCommandBuffer.cpp
+    device/VulkanDeviceCommands.cpp
     device/VulkanDeviceDescriptorSet.cpp
     device/VulkanDevicePipeline.cpp
     device/VulkanDeviceSampler.cpp

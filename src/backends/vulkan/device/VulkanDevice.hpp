@@ -58,6 +58,30 @@ class VulkanDevice final : public Device
 
     CommandBufferHandle CreateCommandBuffer() override;
     void DestroyCommandBuffer(CommandBufferHandle handle) override;
+    void BeginRecording(CommandBufferHandle handle) override;
+    void EndRecording(CommandBufferHandle handle) override;
+    void BeginRendering(CommandBufferHandle cmd, const RenderingInfo &info) override;
+    void EndRendering(CommandBufferHandle cmd) override;
+    void OffscreenSubmit(CommandBufferHandle handle) override;
+
+    // Command recording
+    void SetViewport(CommandBufferHandle cmd, float x, float y, float width, float height) override;
+    void SetScissor(CommandBufferHandle cmd, int32_t x, int32_t y, uint32_t width, uint32_t height) override;
+    void Draw(CommandBufferHandle cmd, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex,
+              uint32_t firstInstance) override;
+    void DrawIndexed(CommandBufferHandle cmd, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex,
+                     int32_t vertexOffset, uint32_t firstInstance) override;
+    void PushConstants(CommandBufferHandle cmd, PipelineHandle pipeline, ShaderStageFlags stages, uint32_t offset,
+                       uint32_t size, const void *data) override;
+
+    void BindPipeline(CommandBufferHandle cmd, PipelineHandle pipeline) override;
+    void BindVertexBuffer(CommandBufferHandle cmd, BufferHandle buffer, uint32_t binding = 0,
+                          uint64_t offset = 0) override;
+    void BindIndexBuffer(CommandBufferHandle cmd, BufferHandle buffer, IndexType indexType,
+                         uint64_t offset = 0) override;
+    void BindDescriptorSet(CommandBufferHandle cmd, PipelineHandle pipeline, DescriptorSetHandle set,
+                           uint32_t setIndex = 0) override;
+
     TextureHandle RegisterExternalTexture(VkImage image, ImageAspectFlags imageAspectFlags, Format format,
                                           uint32_t width, uint32_t height);
     VulkanContext m_context;
