@@ -20,6 +20,7 @@ target_include_directories(${PROJECT_NAME}
 add_subdirectory(examples/hello-triangle)
 add_subdirectory(examples/hello-sphere)
 add_subdirectory(examples/suzanne-scatter)
+add_subdirectory(examples/static-hello-triangle)
 add_subdirectory(src/core)
 add_subdirectory(src/backends/vulkan)
 
