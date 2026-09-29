@@ -2,6 +2,7 @@
 
 #include <backends/vulkan/VulkanContext.hpp>
 #include <backends/vulkan/resources/VulkanBuffer.hpp>
+#include <backends/vulkan/resources/VulkanCommandBuffer.hpp>
 #include <backends/vulkan/resources/VulkanDescriptorSet.hpp>
 #include <backends/vulkan/resources/VulkanPipeline.hpp>
 #include <backends/vulkan/resources/VulkanSampler.hpp>
@@ -47,6 +48,8 @@ class VulkanDevice final : public Device
     void UpdateDescriptorSet(DescriptorSetHandle handle,
                              const std::vector<DescriptorBindingWriteCreateInfo> &writes) override;
 
+    CommandBufferHandle CreateCommandBuffer() override;
+    void DestroyCommandBuffer(CommandBufferHandle handle) override;
     TextureHandle RegisterExternalTexture(VkImage image, ImageAspectFlags imageAspectFlags, Format format,
                                           uint32_t width, uint32_t height);
     VulkanContext m_context;
@@ -70,4 +73,5 @@ class VulkanDevice final : public Device
     ResourcePool<VulkanSampler, SamplerTag> m_samplerPool;
     ResourcePool<VulkanDescriptorLayout, DescriptorLayoutTag> m_descriptorLayoutPool;
     ResourcePool<VulkanDescriptorSet, DescriptorSetTag> m_descriptorSetPool;
+    ResourcePool<VulkanCommandBuffer, CommandBufferTag> m_commandBufferPool;
 };

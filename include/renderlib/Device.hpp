@@ -5,6 +5,7 @@
 #include <span>
 
 #include <renderlib/resources/Buffer.hpp>
+#include <renderlib/resources/CommandBuffer.hpp>
 #include <renderlib/resources/Pipeline.hpp>
 #include <renderlib/resources/ShaderModule.hpp>
 #include <renderlib/resources/Texture.hpp>
@@ -55,6 +56,8 @@ class Device
     virtual void UpdateDescriptorSet(DescriptorSetHandle handle,
                                      const std::vector<DescriptorBindingWriteCreateInfo> &writes) = 0;
 
+    virtual CommandBufferHandle CreateCommandBuffer() = 0;
+    virtual void DestroyCommandBuffer(CommandBufferHandle handle) = 0;
     virtual void WaitIdle() = 0;
 
   protected:
