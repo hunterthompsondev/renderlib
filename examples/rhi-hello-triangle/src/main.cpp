@@ -8,7 +8,7 @@ using namespace Renderlib::Object;
 
 int main()
 {
-    std::unique_ptr<Instance> instance = Instance::Create({.backend = Backend::Vulkan});
+    std::unique_ptr<Instance> instance = Instance::Create({.backend = Backend::Vulkan, .debugMode = true});
 
     return 0;
 }
