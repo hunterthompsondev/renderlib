@@ -4,6 +4,8 @@
 
 #include <renderlib/rhi/objects/Instance.hpp>
 
+#include "VulkanAdapter.hpp"
+
 // Maybe move to contstructor argument in the future.
 static std::vector<const char *> debugLayers = {"VK_LAYER_KHRONOS_validation"};
 static std::vector<const char *> layers = {};
@@ -24,6 +26,8 @@ class VulkanInstance : public Instance
     VulkanInstance &operator=(const VulkanInstance &) = delete;
     VulkanInstance(VulkanInstance &) = delete;
     VulkanInstance &operator=(VulkanInstance &) = delete;
+
+    std::vector<std::unique_ptr<Object::Adapter>> GetAdapters() const override;
 
   private:
     VulkanInstance(const Desc::InstanceDesc &desc);

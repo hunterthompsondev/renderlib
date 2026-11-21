@@ -1,8 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include <renderlib/rhi/descriptors/Descriptors.hpp>
+
+#include "Adapter.hpp"
 
 namespace Renderlib::Object
 {
@@ -17,6 +20,8 @@ class Instance
     Instance &operator=(const Instance &) = delete;
     Instance(Instance &) = delete;
     Instance &operator=(Instance &) = delete;
+
+    virtual std::vector<std::unique_ptr<Object::Adapter>> GetAdapters() const = 0;
 
   protected:
     Instance(const Desc::InstanceDesc &desc);
