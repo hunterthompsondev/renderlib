@@ -17,6 +17,8 @@ class VulkanAdapter : public Adapter
     VulkanAdapter(VulkanAdapter &) = delete;
     VulkanAdapter &operator=(VulkanAdapter &) = delete;
 
+    std::vector<Desc::QueueFamilyDesc> QueryQueueFamilyProperties() const;
+
   private:
     vk::raii::PhysicalDevice m_physicalDevice;
 };

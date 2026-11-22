@@ -14,4 +14,10 @@ struct AdapterDesc
     uint64_t dedicatedVideoMemory = 0; // bytes
 };
 
+struct QueueFamilyDesc
+{
+    Type::AdapterQueueFlags flags;
+    uint32_t count;
+};
+
 } // namespace Renderlib::Desc

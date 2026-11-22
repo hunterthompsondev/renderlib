@@ -4,8 +4,8 @@
 
 #include <vulkan/vulkan_raii.hpp>
 
+#include <rhi/vulkan/utils/FromVkEnums.hpp>
 #include <rhi/vulkan/utils/MemoryUtils.hpp>
-#include <rhi/vulkan/utils/ToCommon.hpp>
 
 static VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
                                                       vk::DebugUtilsMessageTypeFlagsEXT type,
@@ -128,7 +128,7 @@ std::vector<std::unique_ptr<Object::Adapter>> VulkanInstance::GetAdapters() cons
         std::strncpy(desc.name, props.deviceName.data(), sizeof(desc.name) - 1);
         desc.name[sizeof(desc.name) - 1] = '\0';
 
-        desc.type = ToCommon(props.deviceType);
+        desc.type = FromVk(props.deviceType);
         desc.vendorId = props.vendorID;
         desc.deviceId = props.deviceID;
         desc.dedicatedVideoMemory = QueryDeviceLocalMemory(physicalDevices[i]);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include <renderlib/rhi/descriptors/Descriptors.hpp>
 
 namespace Renderlib::Object
@@ -16,6 +18,7 @@ class Adapter
     Adapter &operator=(Adapter &) = delete;
 
     Desc::AdapterDesc GetInfo() const;
+    virtual std::vector<Desc::QueueFamilyDesc> QueryQueueFamilyProperties() const = 0;
 
   protected:
     Desc::AdapterDesc m_desc;

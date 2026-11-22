@@ -7,7 +7,7 @@
 namespace Renderlib
 {
 
-constexpr Type::AdapterType ToCommon(vk::PhysicalDeviceType t)
+constexpr Type::AdapterType FromVk(vk::PhysicalDeviceType t)
 {
     switch (t)
     {
@@ -21,9 +21,9 @@ constexpr Type::AdapterType ToCommon(vk::PhysicalDeviceType t)
         return Type::AdapterType::Cpu;
     case vk::PhysicalDeviceType::eOther:
         return Type::AdapterType::Other;
-    default:
-        return Type::AdapterType::Other;
     }
+
+    return Type::AdapterType::Other;
 }
 
 } // namespace Renderlib
