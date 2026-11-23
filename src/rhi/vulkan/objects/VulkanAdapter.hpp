@@ -16,8 +16,8 @@ class VulkanAdapter : public Adapter
 
     VulkanAdapter(const VulkanAdapter &) = delete;
     VulkanAdapter &operator=(const VulkanAdapter &) = delete;
-    VulkanAdapter(VulkanAdapter &) = delete;
-    VulkanAdapter &operator=(VulkanAdapter &) = delete;
+    VulkanAdapter(VulkanAdapter &&) = default;
+    VulkanAdapter &operator=(VulkanAdapter &&) = default;
 
     std::vector<Desc::AdapterQueueFamilyInfo> QueryQueueFamilyProperties() const override;
     std::unique_ptr<Device> CreateDevice(const Desc::DeviceDesc &desc) const override;

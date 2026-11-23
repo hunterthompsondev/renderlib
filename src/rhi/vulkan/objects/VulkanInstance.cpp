@@ -107,36 +107,38 @@ VulkanInstance::VulkanInstance(const Desc::InstanceDesc &desc) : Instance(desc)
                                                                                     .setPfnUserCallback(&DebugCallback);
 
         m_debugMessenger = m_instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT);
+
+        // Enumerate adapters
+        std::vector<vk::raii::PhysicalDevice> physicalDevices = m_instance.enumeratePhysicalDevices();
+
+        for (int i = 0; i < physicalDevices.size(); ++i)
+        {
+            const vk::PhysicalDeviceProperties props = physicalDevices[i].getProperties();
+
+            Desc::AdapterDesc desc{};
+
+            std::strncpy(desc.name, props.deviceName.data(), sizeof(desc.name) - 1);
+            desc.name[sizeof(desc.name) - 1] = '\0';
+
+            desc.type = FromVk(props.deviceType);
+            desc.vendorId = props.vendorID;
+            desc.deviceId = props.deviceID;
+            desc.dedicatedVideoMemory = QueryDeviceLocalMemory(physicalDevices[i]);
+
+            m_adapters.emplace_back(desc, std::move(physicalDevices[i]));
+        }
     }
 }
 
-std::vector<std::unique_ptr<Object::Adapter>> VulkanInstance::GetAdapters() const
+std::vector<Adapter *> VulkanInstance::GetAdapters()
 {
-    std::vector<vk::raii::PhysicalDevice> physicalDevices = m_instance.enumeratePhysicalDevices();
-    if (physicalDevices.empty())
+    std::vector<Adapter *> ptrs;
+    ptrs.reserve(m_adapters.size());
+    for (VulkanAdapter &a : m_adapters)
     {
-        return {};
+        ptrs.push_back(&a);
     }
-
-    std::vector<std::unique_ptr<Object::Adapter>> adapters;
-    for (int i = 0; i < physicalDevices.size(); ++i)
-    {
-        const vk::PhysicalDeviceProperties props = physicalDevices[i].getProperties();
-
-        Desc::AdapterDesc desc{};
-
-        std::strncpy(desc.name, props.deviceName.data(), sizeof(desc.name) - 1);
-        desc.name[sizeof(desc.name) - 1] = '\0';
-
-        desc.type = FromVk(props.deviceType);
-        desc.vendorId = props.vendorID;
-        desc.deviceId = props.deviceID;
-        desc.dedicatedVideoMemory = QueryDeviceLocalMemory(physicalDevices[i]);
-
-        adapters.push_back(std::make_unique<Object::VulkanAdapter>(desc, std::move(physicalDevices[i])));
-    }
-
-    return adapters;
+    return ptrs;
 }
 
 } // namespace Renderlib::Object

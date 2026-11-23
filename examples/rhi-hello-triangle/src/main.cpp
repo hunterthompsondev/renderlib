@@ -11,7 +11,7 @@ using namespace Renderlib::Desc;
 int main()
 {
     std::unique_ptr<Instance> instance = Instance::Create({.backend = Backend::Vulkan, .debugMode = true});
-    std::unique_ptr<Adapter> adapter = std::move(instance->GetAdapters()[0]); // Use first adapter for simplicity
+    Adapter *adapter = std::move(instance->GetAdapters()[0]); // Use first adapter for simplicity
     std::unique_ptr<Device> device = adapter->CreateDevice({
         .queues =
             {

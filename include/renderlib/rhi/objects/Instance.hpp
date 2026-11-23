@@ -21,7 +21,7 @@ class Instance
     Instance(Instance &) = delete;
     Instance &operator=(Instance &) = delete;
 
-    virtual std::vector<std::unique_ptr<Object::Adapter>> GetAdapters() const = 0;
+    virtual std::vector<Adapter *> GetAdapters() = 0;
 
   protected:
     Instance(const Desc::InstanceDesc &desc);

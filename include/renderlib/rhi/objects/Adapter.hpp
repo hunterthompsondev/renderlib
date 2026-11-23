@@ -17,8 +17,8 @@ class Adapter
 
     Adapter(const Adapter &) = delete;
     Adapter &operator=(const Adapter &) = delete;
-    Adapter(Adapter &) = delete;
-    Adapter &operator=(Adapter &) = delete;
+    Adapter(Adapter &&) = default;
+    Adapter &operator=(Adapter &&) = default;
 
     Desc::AdapterDesc GetInfo() const;
 

@@ -27,7 +27,7 @@ class VulkanInstance : public Instance
     VulkanInstance(VulkanInstance &) = delete;
     VulkanInstance &operator=(VulkanInstance &) = delete;
 
-    std::vector<std::unique_ptr<Object::Adapter>> GetAdapters() const override;
+    std::vector<Adapter *> GetAdapters() override;
 
   private:
     VulkanInstance(const Desc::InstanceDesc &desc);
@@ -35,6 +35,8 @@ class VulkanInstance : public Instance
     vk::raii::Context m_context;
     vk::raii::Instance m_instance = nullptr;
     vk::raii::DebugUtilsMessengerEXT m_debugMessenger = nullptr;
+
+    std::vector<VulkanAdapter> m_adapters;
 };
 
 } // namespace Renderlib::Object

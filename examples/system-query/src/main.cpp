@@ -148,7 +148,7 @@ int main()
         return 1;
     }
 
-    const std::vector<std::unique_ptr<Adapter>> adapters = instance->GetAdapters();
+    const std::vector<Adapter *> adapters = instance->GetAdapters();
 
     std::cout << "\nSystem Query\n"
               << "Adapters found: " << adapters.size() << "\n\n";
