@@ -66,6 +66,25 @@ VulkanDevice::VulkanDevice(const Desc::DeviceDesc &desc, const vk::raii::Physica
         .setPEnabledExtensionNames(requiredExtensions);
 
     m_device = vk::raii::Device(physicalDevice, deviceCreateInfo);
+
+    // Create queues
+    for (const auto &queue : desc.queues)
+    {
+        for (uint32_t i = 0; i < queue.priorites.size(); i++)
+        {
+            m_queues.emplace_back((Desc::QueueDesc){.familyIndex = queue.familyIndex, .queueIndex = i}, m_device);
+        }
+    }
+}
+
+std::vector<Queue *> VulkanDevice::GetQueues()
+{
+    std::vector<Queue *> ptrs(m_queues.size());
+    for (VulkanQueue &q : m_queues)
+    {
+        ptrs.push_back(&q);
+    }
+    return ptrs;
 }
 
 } // namespace Renderlib::Object

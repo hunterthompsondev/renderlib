@@ -18,6 +18,7 @@ int main()
                 (DeviceQueueDesc){.familyIndex = 0, .priorites = {0.5f}}, // Graphics, Compute, Transfer
             },
     });
+    std::vector<Queue *> queues = device->GetQueues();
 
     return 0;
 }
