@@ -79,7 +79,8 @@ VulkanDevice::VulkanDevice(const Desc::DeviceDesc &desc, const vk::raii::Physica
 
 std::vector<Queue *> VulkanDevice::GetQueues()
 {
-    std::vector<Queue *> ptrs(m_queues.size());
+    std::vector<Queue *> ptrs;
+    ptrs.reserve(m_queues.size());
     for (VulkanQueue &q : m_queues)
     {
         ptrs.push_back(&q);
