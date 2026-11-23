@@ -45,7 +45,7 @@ constexpr std::array AdapterQueueFlagsTable = {
                                                          Type::AdapterQueueFlags::Transfer},
 };
 
-Type::AdapterQueueFlags FromVk(vk::QueueFlags f)
+inline Type::AdapterQueueFlags FromVk(vk::QueueFlags f)
 {
     Type::AdapterQueueFlags c = FromVk(f, AdapterQueueFlagsTable);
     // Spec: graphics and compute families implicitly support transfer

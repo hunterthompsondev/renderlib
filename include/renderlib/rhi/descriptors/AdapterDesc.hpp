@@ -5,6 +5,12 @@
 namespace Renderlib::Desc
 {
 
+struct AdapterQueueFamilyInfo
+{
+    Type::AdapterQueueFlags flags;
+    uint32_t count;
+};
+
 struct AdapterDesc
 {
     char name[256] = {};
@@ -12,12 +18,6 @@ struct AdapterDesc
     uint32_t vendorId = 0; // raw PCI id
     uint32_t deviceId = 0;
     uint64_t dedicatedVideoMemory = 0; // bytes
-};
-
-struct QueueFamilyDesc
-{
-    Type::AdapterQueueFlags flags;
-    uint32_t count;
 };
 
 } // namespace Renderlib::Desc

@@ -10,14 +10,14 @@ VulkanAdapter::VulkanAdapter(const Desc::AdapterDesc &desc, vk::raii::PhysicalDe
 {
 }
 
-std::vector<Desc::QueueFamilyDesc> VulkanAdapter::QueryQueueFamilyProperties() const
+std::vector<Desc::AdapterQueueFamilyInfo> VulkanAdapter::QueryQueueFamilyProperties() const
 {
-    std::vector<Desc::QueueFamilyDesc> queueFamilies;
+    std::vector<Desc::AdapterQueueFamilyInfo> queueFamilies;
 
     std::vector<vk::QueueFamilyProperties> queueProperties = m_physicalDevice.getQueueFamilyProperties();
     for (const auto &props : queueProperties)
     {
-        Desc::QueueFamilyDesc desc;
+        Desc::AdapterQueueFamilyInfo desc;
         desc.flags = FromVk(props.queueFlags);
         desc.count = props.queueCount;
 
@@ -27,4 +27,8 @@ std::vector<Desc::QueueFamilyDesc> VulkanAdapter::QueryQueueFamilyProperties() c
     return queueFamilies;
 }
 
+std::unique_ptr<Device> VulkanAdapter::CreateDevice(const Desc::DeviceDesc &desc) const
+{
+    return std::make_unique<VulkanDevice>(desc, m_physicalDevice);
+}
 } // namespace Renderlib::Object

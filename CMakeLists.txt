@@ -20,4 +20,5 @@ target_include_directories(${PROJECT_NAME}
 add_subdirectory(src/rhi)
 
 # Examples
+add_subdirectory(examples/system-query)
 add_subdirectory(examples/rhi-hello-triangle)

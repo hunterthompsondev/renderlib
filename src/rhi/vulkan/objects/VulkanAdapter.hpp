@@ -4,6 +4,8 @@
 
 #include <renderlib/rhi/objects/Adapter.hpp>
 
+#include "VulkanDevice.hpp"
+
 namespace Renderlib::Object
 {
 class VulkanAdapter : public Adapter
@@ -17,7 +19,8 @@ class VulkanAdapter : public Adapter
     VulkanAdapter(VulkanAdapter &) = delete;
     VulkanAdapter &operator=(VulkanAdapter &) = delete;
 
-    std::vector<Desc::QueueFamilyDesc> QueryQueueFamilyProperties() const;
+    std::vector<Desc::AdapterQueueFamilyInfo> QueryQueueFamilyProperties() const override;
+    std::unique_ptr<Device> CreateDevice(const Desc::DeviceDesc &desc) const override;
 
   private:
     vk::raii::PhysicalDevice m_physicalDevice;
