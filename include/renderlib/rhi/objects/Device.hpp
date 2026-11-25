@@ -4,7 +4,7 @@
 
 #include <renderlib/rhi/descriptors/Descriptors.hpp>
 
-#include "Queue.hpp"
+#include "QueueFamily.hpp"
 
 namespace Renderlib::Object
 {
@@ -19,7 +19,7 @@ class Device
     Device(Device &) = delete;
     Device &operator=(Device &) = delete;
 
-    virtual std::vector<Queue *> GetQueues() = 0;
+    virtual std::vector<QueueFamily *> GetQueueFamilies() = 0;
 
   protected:
     Desc::DeviceDesc m_desc;

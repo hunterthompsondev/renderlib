@@ -4,7 +4,7 @@
 
 #include <renderlib/rhi/objects/Device.hpp>
 
-#include "VulkanQueue.hpp"
+#include "VulkanQueueFamily.hpp"
 
 // Maybe move to contstructor argument in the future.
 static std::vector<const char *> debugDeviceExtentions = {};
@@ -23,11 +23,11 @@ class VulkanDevice : public Device
     VulkanDevice(VulkanDevice &) = delete;
     VulkanDevice &operator=(VulkanDevice &) = delete;
 
-    std::vector<Queue *> GetQueues() override;
+    std::vector<QueueFamily *> GetQueueFamilies() override;
 
   private:
     vk::raii::Device m_device = nullptr;
-    std::vector<VulkanQueue> m_queues;
+    std::vector<VulkanQueueFamily> m_queueFamilies;
 };
 
 } // namespace Renderlib::Object

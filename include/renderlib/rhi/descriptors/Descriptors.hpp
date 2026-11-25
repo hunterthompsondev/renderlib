@@ -4,3 +4,4 @@
 #include "DeviceDesc.hpp"
 #include "InstanceDesc.hpp"
 #include "QueueDesc.hpp"
+#include "QueueFamilyDesc.hpp"

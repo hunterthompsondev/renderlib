@@ -2,6 +2,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     objects/VulkanInstance.cpp
     objects/VulkanAdapter.cpp
     objects/VulkanDevice.cpp
+    objects/VulkanQueueFamily.cpp
     objects/VulkanQueue.cpp
 )
 

@@ -67,21 +67,25 @@ VulkanDevice::VulkanDevice(const Desc::DeviceDesc &desc, const vk::raii::Physica
 
     m_device = vk::raii::Device(physicalDevice, deviceCreateInfo);
 
-    // Create queues
+    // Create queue familes
     for (const auto &queue : desc.queues)
     {
-        for (uint32_t i = 0; i < queue.priorites.size(); i++)
-        {
-            m_queues.emplace_back((Desc::QueueDesc){.familyIndex = queue.familyIndex, .queueIndex = i}, m_device);
-        }
+        m_queueFamilies.emplace_back(
+            (Desc::QueueFamilyDesc){.familyIndex = queue.familyIndex,
+                                    .queueCount = static_cast<uint32_t>(queue.priorites.size())},
+            m_device);
+        // for (uint32_t i = 0; i < queue.priorites.size(); i++)
+        // {
+        //     m_queues.emplace_back((Desc::QueueDesc){.familyIndex = queue.familyIndex, .queueIndex = i}, m_device);
+        // }
     }
 }
 
-std::vector<Queue *> VulkanDevice::GetQueues()
+std::vector<QueueFamily *> VulkanDevice::GetQueueFamilies()
 {
-    std::vector<Queue *> ptrs;
-    ptrs.reserve(m_queues.size());
-    for (VulkanQueue &q : m_queues)
+    std::vector<QueueFamily *> ptrs;
+    ptrs.reserve(m_queueFamilies.size());
+    for (VulkanQueueFamily &q : m_queueFamilies)
     {
         ptrs.push_back(&q);
     }
