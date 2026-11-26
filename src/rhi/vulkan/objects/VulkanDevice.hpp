@@ -1,5 +1,6 @@
 #pragma once
 
+#include <deque>
 #include <vulkan/vulkan_raii.hpp>
 
 #include <renderlib/rhi/objects/Device.hpp>
@@ -27,7 +28,7 @@ class VulkanDevice : public Device
 
   private:
     vk::raii::Device m_device = nullptr;
-    std::vector<VulkanQueueFamily> m_queueFamilies;
+    std::deque<VulkanQueueFamily> m_queueFamilies;
 };
 
 } // namespace Renderlib::Object

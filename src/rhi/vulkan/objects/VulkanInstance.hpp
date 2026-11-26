@@ -1,5 +1,6 @@
 #pragma once
 
+#include <deque>
 #include <vulkan/vulkan_raii.hpp>
 
 #include <renderlib/rhi/objects/Instance.hpp>
@@ -36,7 +37,7 @@ class VulkanInstance : public Instance
     vk::raii::Instance m_instance = nullptr;
     vk::raii::DebugUtilsMessengerEXT m_debugMessenger = nullptr;
 
-    std::vector<VulkanAdapter> m_adapters;
+    std::deque<VulkanAdapter> m_adapters;
 };
 
 } // namespace Renderlib::Object

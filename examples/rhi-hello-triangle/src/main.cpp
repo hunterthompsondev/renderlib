@@ -11,7 +11,7 @@ using namespace Renderlib::Desc;
 int main()
 {
     std::unique_ptr<Instance> instance = Instance::Create({.backend = Backend::Vulkan, .debugMode = true});
-    Adapter *adapter = std::move(instance->GetAdapters()[0]); // Use first adapter for simplicity
+    Adapter *adapter = instance->GetAdapters()[0]; // Use first adapter for simplicity
     std::unique_ptr<Device> device = adapter->CreateDevice({
         .queues =
             {
@@ -20,6 +20,8 @@ int main()
     });
     std::vector<QueueFamily *> queueFamilies = device->GetQueueFamilies();
     Queue *gfxQueue = queueFamilies[0]->GetQueues()[0];
+
+    std::unique_ptr<CommandPool> cmdPool = queueFamilies[0]->CreateCommandPool({.transient = true});
 
     return 0;
 }

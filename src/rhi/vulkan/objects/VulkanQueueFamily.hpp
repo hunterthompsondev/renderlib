@@ -1,9 +1,11 @@
 #pragma once
 
+#include <deque>
 #include <vulkan/vulkan_raii.hpp>
 
 #include <renderlib/rhi/objects/QueueFamily.hpp>
 
+#include "VulkanCommandPool.hpp"
 #include "VulkanQueue.hpp"
 
 namespace Renderlib::Object
@@ -17,13 +19,14 @@ class VulkanQueueFamily : public QueueFamily
 
     VulkanQueueFamily(const VulkanQueueFamily &) = delete;
     VulkanQueueFamily &operator=(const VulkanQueueFamily &) = delete;
-    VulkanQueueFamily(VulkanQueueFamily &&) = default;
-    VulkanQueueFamily &operator=(VulkanQueueFamily &&) = default;
 
     std::vector<Queue *> GetQueues() override;
+    std::unique_ptr<CommandPool> CreateCommandPool(const Desc::CommandPoolDesc &desc) override;
 
   private:
-    std::vector<VulkanQueue> m_queues;
+    const vk::raii::Device &m_device;
+
+    std::deque<VulkanQueue> m_queues;
 };
 
 } // namespace Renderlib::Object

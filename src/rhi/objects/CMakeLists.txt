@@ -4,4 +4,5 @@ target_sources(${PROJECT_NAME} PRIVATE
     Device.cpp
     QueueFamily.cpp
     Queue.cpp
+    CommandPool.cpp
 )
