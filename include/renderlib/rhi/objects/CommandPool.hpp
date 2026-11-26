@@ -1,6 +1,10 @@
 #pragma once
 
+#include <memory>
+
 #include <renderlib/rhi/descriptors/Descriptors.hpp>
+
+#include "CommandBuffer.hpp"
 
 namespace Renderlib::Object
 {
@@ -16,6 +20,8 @@ class CommandPool
     CommandPool &operator=(CommandPool &&) = default;
 
     Desc::CommandPoolDesc GetDesc() const;
+
+    virtual std::unique_ptr<CommandBuffer> CreateCommandBuffer() = 0;
 
   protected:
     Desc::CommandPoolDesc m_desc;

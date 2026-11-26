@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Adapter.hpp"
+#include "CommandBuffer.hpp"
 #include "CommandPool.hpp"
 #include "Device.hpp"
 #include "Instance.hpp"

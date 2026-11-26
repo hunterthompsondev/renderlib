@@ -22,6 +22,7 @@ int main()
     Queue *gfxQueue = queueFamilies[0]->GetQueues()[0];
 
     std::unique_ptr<CommandPool> cmdPool = queueFamilies[0]->CreateCommandPool({.transient = true});
+    std::unique_ptr<CommandBuffer> cmd = cmdPool->CreateCommandBuffer();
 
     return 0;
 }

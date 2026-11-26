@@ -5,6 +5,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     objects/VulkanQueueFamily.cpp
     objects/VulkanQueue.cpp
     objects/VulkanCommandPool.cpp
+    objects/VulkanCommandBuffer.cpp
 )
 
 find_package(Vulkan REQUIRED)

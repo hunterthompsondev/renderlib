@@ -4,6 +4,8 @@
 
 #include <renderlib/rhi/objects/CommandPool.hpp>
 
+#include "VulkanCommandBuffer.hpp"
+
 namespace Renderlib::Object
 {
 
@@ -15,10 +17,12 @@ class VulkanCommandPool : public CommandPool
 
     VulkanCommandPool(const VulkanCommandPool &) = delete;
     VulkanCommandPool &operator=(const VulkanCommandPool &) = delete;
-    VulkanCommandPool(VulkanCommandPool &&) = default;
-    VulkanCommandPool &operator=(VulkanCommandPool &&) = default;
+
+    std::unique_ptr<CommandBuffer> CreateCommandBuffer();
 
   private:
+    const vk::raii::Device &m_device;
+
     vk::raii::CommandPool m_pool = nullptr;
 };
 
